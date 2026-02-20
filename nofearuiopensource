@@ -160,8 +160,12 @@ function UILib:CreateWindow(cfg)
     end
 
     -- Main frame 700x520
-    local Main = frame(nil, { Color = T.BG, Size = UDim2.new(0,700,0,520), ZIndex = 2 })
+    local Main = Instance.new("Frame")
+    Main.BackgroundColor3 = T.BG
+    Main.BorderSizePixel = 0
+    Main.Size = UDim2.new(0,700,0,520)
     Main.Position = UDim2.new(0.5,-350,0.5,-260)
+    Main.ZIndex = 2
     Main.ClipsDescendants = false
     Main.Parent = Gui
     print("[NoFear UILib] Window created, parented to:", Gui.Parent)
