@@ -1,4 +1,4 @@
--- NoFear Drawing UI Library v9.11
+-- NoFear Drawing UI Library v9.3
 -- Fixed: gpe blocking clicks, slider double-handler, Transparency on tab elements, stars visibility
 
 local DrawLib = {}
@@ -272,12 +272,6 @@ function DrawLib:CreateWindow(cfg)
             return
         end
 
-        -- Click outside open dropdown closes it
-        if openDropdown ~= nil then
-            closeOpenDropdown()
-            return
-        end
-
         -- Tab click
         for i, tab in ipairs(tabs) do
             local ty = WY + TBH + (i - 1) * 34
@@ -288,19 +282,39 @@ function DrawLib:CreateWindow(cfg)
             end
         end
 
-        -- Element handlers (account for scroll offset, skip if scrolled out of view)
+        -- Check dropdown item handlers FIRST (they are absolute, above everything)
+        if openDropdown ~= nil then
+            local hitDropItem = false
+            for _, h in ipairs(dropHandlers) do
+                if h.tabIdx == activeTab then
+                    local ax = WX + h.ox
+                    local ay = WY + h.oy
+                    if mx >= ax and mx <= ax + h.w and my >= ay and my <= ay + h.h then
+                        pcall(h.fn)
+                        hitDropItem = true
+                        return
+                    end
+                end
+            end
+            -- Clicked outside the open dropdown — close it
+            if not hitDropItem then
+                closeOpenDropdown()
+                return
+            end
+        end
+
+        -- Regular element handlers (account for scroll offset, skip if out of view)
         local sc = tabScrollY[activeTab] or 0
         for _, h in ipairs(handlers) do
+            -- skip drop handlers (already handled above)
+            local isDropH = false
+            for _, dh in ipairs(dropHandlers) do if dh == h then isDropH=true; break end end
+            if isDropH then continue end
+
             if h.tabIdx == activeTab then
-                -- dropHandlers have absolute ox/oy already (no scroll applied)
-                local isDropH = false
-                for _, dh in ipairs(dropHandlers) do if dh == h then isDropH=true; break end end
                 local ax = WX + h.ox
-                local ay = isDropH and (WY + h.oy) or (WY + h.oy - sc)
-                -- skip if outside visible content area (unless it's a dropdown item)
-                if not isDropH then
-                    if ay < WY+TBH or ay > WY+WH-BBH then continue end
-                end
+                local ay = WY + h.oy - sc
+                if ay < WY+TBH or ay > WY+WH-BBH then continue end
                 if mx >= ax and mx <= ax + h.w and my >= ay and my <= ay + h.h then
                     if h.isSlider then
                         h.sliding = true
@@ -657,4 +671,5 @@ function DrawLib:CreateWindow(cfg)
 
     return W
 end
+
 return DrawLib
