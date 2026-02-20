@@ -170,47 +170,79 @@ function UILib:CreateWindow(cfg)
     Main.Parent = Gui
     makecorner(Main, 6)
 
-    -- White glow around the UI (big, visible)
+    -- White glow fitted to the UI
     local Glow = Instance.new("ImageLabel", Gui)
-    Glow.Size = UDim2.new(0,900,0,720)
-    Glow.Position = UDim2.new(0.5,-450,0.5,-360)
+    Glow.Size = UDim2.new(0,840,0,620)
+    Glow.Position = UDim2.new(0.5,-420,0.5,-310)
     Glow.BackgroundTransparency = 1
     Glow.Image = "rbxassetid://5028857084"
     Glow.ImageColor3 = Color3.fromRGB(255,255,255)
-    Glow.ImageTransparency = 0.6
+    Glow.ImageTransparency = 0.55
     Glow.ZIndex = 1
     Glow.ScaleType = Enum.ScaleType.Stretch
 
-    -- Falling white stars (stop when UI closed/destroyed)
-    local starsRunning = true
     local TweenService = game:GetService("TweenService")
 
+    -- Star spawner function — restarts every time UI is shown
+    local function spawnStars()
+        task.spawn(function()
+            while Main and Main.Parent and Main.Visible do
+                -- Make a 4-pointed star using two overlapping rotated rectangles
+                local starContainer = Instance.new("Frame", Gui)
+                starContainer.BackgroundTransparency = 1
+                local sz = math.random(6,14)
+                starContainer.Size = UDim2.new(0,sz,0,sz)
+                starContainer.Position = UDim2.new(math.random(0,100)/100, 0, -0.03, 0)
+                starContainer.ZIndex = 1
+                starContainer.ClipsDescendants = false
+
+                local alpha = math.random(30,70)/100
+
+                -- Horizontal bar
+                local bar1 = Instance.new("Frame", starContainer)
+                bar1.BackgroundColor3 = Color3.fromRGB(255,255,255)
+                bar1.BorderSizePixel = 0
+                bar1.BackgroundTransparency = alpha
+                bar1.Size = UDim2.new(1,0,0.3,0)
+                bar1.Position = UDim2.new(0,0,0.35,0)
+                bar1.ZIndex = 1
+                makecorner(bar1, 2)
+
+                -- Vertical bar
+                local bar2 = Instance.new("Frame", starContainer)
+                bar2.BackgroundColor3 = Color3.fromRGB(255,255,255)
+                bar2.BorderSizePixel = 0
+                bar2.BackgroundTransparency = alpha
+                bar2.Size = UDim2.new(0.3,0,1,0)
+                bar2.Position = UDim2.new(0.35,0,0,0)
+                bar2.ZIndex = 1
+                makecorner(bar2, 2)
+
+                local fallTime = math.random(40,90)/10
+                local tween = TweenService:Create(starContainer,
+                    TweenInfo.new(fallTime, Enum.EasingStyle.Linear),
+                    { Position = UDim2.new(starContainer.Position.X.Scale, 0, 1.05, 0) }
+                )
+                -- Fade out near the end
+                local fadeTween = TweenService:Create(bar1,
+                    TweenInfo.new(fallTime, Enum.EasingStyle.Linear), { BackgroundTransparency = 1 })
+                local fadeTween2 = TweenService:Create(bar2,
+                    TweenInfo.new(fallTime, Enum.EasingStyle.Linear), { BackgroundTransparency = 1 })
+                tween:Play(); fadeTween:Play(); fadeTween2:Play()
+                tween.Completed:Connect(function() starContainer:Destroy() end)
+                task.wait(math.random(2,5)/10)
+            end
+        end)
+    end
+
+    -- Start stars immediately
+    spawnStars()
+
+    -- Restart stars + toggle glow when UI visibility changes
     Main:GetPropertyChangedSignal("Visible"):Connect(function()
-        starsRunning = Main.Visible
         Glow.Visible = Main.Visible
-    end)
-
-    task.spawn(function()
-        while starsRunning do
-            if not Main or not Main.Parent then break end
-            local star = Instance.new("Frame", Gui)
-            star.BackgroundColor3 = Color3.fromRGB(255,255,255)
-            star.BorderSizePixel = 0
-            local sz = math.random(2,5)
-            star.Size = UDim2.new(0,sz,0,sz)
-            star.Position = UDim2.new(math.random(0,100)/100, 0, -0.02, 0)
-            star.BackgroundTransparency = math.random(20,60)/100
-            star.ZIndex = 1
-            makecorner(star, sz)
-
-            local fallTime = math.random(40,90)/10
-            local tween = TweenService:Create(star,
-                TweenInfo.new(fallTime, Enum.EasingStyle.Linear),
-                { Position = UDim2.new(star.Position.X.Scale, 0, 1.05, 0), BackgroundTransparency = 1 }
-            )
-            tween:Play()
-            tween.Completed:Connect(function() star:Destroy() end)
-            task.wait(math.random(2,6)/10)
+        if Main.Visible then
+            spawnStars()
         end
     end)
     print("[NoFear UILib] Window created, parented to:", Gui.Parent)
