@@ -1,4 +1,4 @@
--- NO.FEAR Drawing UI Library v6.0 (RenderStepped architecture)
+-- NO.FEAR Drawing UI Library v6.0 (RenderStepped architecture
 -- All positions recalculated every frame from WX/WY
 -- Zero closures for positions, zero allD complexity
 
