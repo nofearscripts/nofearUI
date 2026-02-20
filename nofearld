@@ -8,7 +8,6 @@
 --// ============================================================
 --// CONFIG
 --// ============================================================
-local ScriptURL  = "https://raw.githubusercontent.com/nofearscripts/strfsch/refs/heads/main/main.lua"
 local ScriptName = "NoFear"  -- Game name shown in key UI
 
 --// ============================================================
