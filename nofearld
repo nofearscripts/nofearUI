@@ -1,4 +1,4 @@
-﻿--// ============================================================
+m﻿--// ============================================================
 --// NO.FEAR LOADER v2.0 (Key System + CounterAPI)
 --// ============================================================
 --//
@@ -39,7 +39,6 @@ end
 task.spawn(function()
     pcall(incrementCounter)
 end)
-
 --
 local function readSavedKey()
     local ok, data = pcall(readfile, KEY_SAVE_FILE)
@@ -545,3 +544,4 @@ runWithKeyCheck(function()
     local mainSuccess, mainScript = pcall(function()
         return game:HttpGet(ScriptURL)
     end)
+end)
