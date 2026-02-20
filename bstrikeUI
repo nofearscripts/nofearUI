@@ -1,4 +1,4 @@
--- NoFear Drawing UI Library v7.0
+-- NoFear Drawing UI Library v7.0s
 -- Clean rewrite, same design, actually works
 
 local DrawLib = {}
