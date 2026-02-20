@@ -1,3 +1,4 @@
+﻿--// ============================================================
 --// NO.FEAR LOADER v2.0 (Key System + CounterAPI)
 --// ============================================================
 --//
@@ -5,12 +6,15 @@
 --// Key System: https://nofear.up.railway.app/keysystem
 --// Discord:    https://discord.gg/G9QSXsB9wY
 --// ============================================================
+
+--// ============================================================
 --// CONFIG
 --// ============================================================
+local ScriptURL  = "https://raw.githubusercontent.com/nofearscripts/strfsch/refs/heads/main/main.lua"
 local ScriptName = "NoFear"  -- Game name shown in key UI
 
 --// ============================================================
---// INTERNAL
+--// INTERNAL â€” Do not edit below
 --// ============================================================
 local CounterNamespace = "NoFear_BlockSpin"
 local CounterKey       = "executions"
@@ -38,7 +42,8 @@ end
 task.spawn(function()
     pcall(incrementCounter)
 end)
---
+
+
 local function readSavedKey()
     local ok, data = pcall(readfile, KEY_SAVE_FILE)
     if ok and data and #data > 5 then
@@ -55,7 +60,7 @@ local function clearSavedKey()
     pcall(writefile, KEY_SAVE_FILE, "")
 end
 
--- â”€â”€ HWID
+
 local function getHWID()
     -- Try executor-provided HWID functions first
     local hwid = nil
@@ -124,7 +129,7 @@ local function validateKey(key)
     return false, "Could not reach server. Check your connection."
 end
 
--- â”€â”€ Key UI
+
 local function destroyExisting()
     local cg = game:GetService("CoreGui")
     pcall(function() local e = cg:FindFirstChild("NoFearKeySystem"); if e then e:Destroy() end end)
