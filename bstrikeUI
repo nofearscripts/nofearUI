@@ -1,0 +1,490 @@
+--// ============================================================
+--// NO.FEAR DRAWING UI LIBRARY v1.0
+--// Uses Drawing API only - no Roblox instances
+--// For anti-cheat games like BloxStrike
+--// ============================================================
+
+local DrawLib = {}
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+
+-- Theme
+local T = {
+    BG        = Color3.fromRGB(30, 30, 30),
+    BG2       = Color3.fromRGB(25, 25, 25),
+    Sidebar   = Color3.fromRGB(22, 22, 22),
+    TopBar    = Color3.fromRGB(20, 20, 20),
+    Divider   = Color3.fromRGB(45, 45, 45),
+    Pink      = Color3.fromRGB(255, 105, 180),
+    Text      = Color3.fromRGB(220, 220, 220),
+    TextDim   = Color3.fromRGB(120, 120, 120),
+    Input     = Color3.fromRGB(35, 35, 35),
+    Toggle_On = Color3.fromRGB(255, 105, 180),
+    Toggle_Off= Color3.fromRGB(55, 55, 55),
+    White     = Color3.fromRGB(255, 255, 255),
+    Black     = Color3.fromRGB(0, 0, 0),
+}
+
+-- Drawing helpers
+local drawings = {}
+local function newDrawing(type, props)
+    local d = Drawing.new(type)
+    for k, v in pairs(props) do d[k] = v end
+    table.insert(drawings, d)
+    return d
+end
+
+local function rect(x, y, w, h, color, trans, filled, thickness)
+    return newDrawing("Square", {
+        Position = Vector2.new(x, y),
+        Size = Vector2.new(w, h),
+        Color = color or T.BG,
+        Transparency = trans or 1,
+        Filled = filled ~= false,
+        Thickness = thickness or 1,
+        Visible = true,
+        ZIndex = 1,
+    })
+end
+
+local function text(str, x, y, size, color, outline, center)
+    return newDrawing("Text", {
+        Text = str or "",
+        Position = Vector2.new(x, y),
+        Size = size or 13,
+        Color = color or T.Text,
+        Outline = outline ~= false,
+        OutlineColor = T.Black,
+        Center = center or false,
+        Visible = true,
+        ZIndex = 2,
+        Font = Drawing.Fonts.UI,
+    })
+end
+
+local function line(x1, y1, x2, y2, color, thickness)
+    return newDrawing("Line", {
+        From = Vector2.new(x1, y1),
+        To = Vector2.new(x2, y2),
+        Color = color or T.Divider,
+        Thickness = thickness or 1,
+        Visible = true,
+        ZIndex = 1,
+    })
+end
+
+-- Check if mouse is inside a rect
+local function inRect(mx, my, x, y, w, h)
+    return mx >= x and mx <= x+w and my >= y and my <= y+h
+end
+
+-- Get mouse pos
+local function getMouse()
+    local pos = UIS:GetMouseLocation()
+    return pos.X, pos.Y
+end
+
+-- ── Window ────────────────────────────────────────────────────────────────────
+function DrawLib:CreateWindow(cfg)
+    cfg = cfg or {}
+    local W = {}
+    local tabs = {}
+    local activeTab = nil
+    local visible = true
+
+    -- Window dimensions
+    local WX, WY = 150, 100  -- start position
+    local WW, WH = 700, 520
+    local TOPBAR_H = 32
+    local SIDEBAR_W = 150
+    local BOTTOM_H = 22
+
+    -- Dragging state
+    local dragging = false
+    local dragOffX, dragOffY = 0, 0
+
+    -- All drawings for this window
+    local winDrawings = {}
+    local function wd(type, props)
+        local d = Drawing.new(type)
+        for k, v in pairs(props) do d[k] = v end
+        table.insert(winDrawings, d)
+        table.insert(drawings, d)
+        return d
+    end
+
+    -- Main background
+    local bgMain    = wd("Square", { Position=Vector2.new(WX,WY), Size=Vector2.new(WW,WH), Color=T.BG, Filled=true, Transparency=1, ZIndex=5, Visible=true })
+    local bgOutline = wd("Square", { Position=Vector2.new(WX,WY), Size=Vector2.new(WW,WH), Color=T.Divider, Filled=false, Thickness=1, ZIndex=6, Visible=true })
+
+    -- Top bar
+    local bgTop = wd("Square", { Position=Vector2.new(WX,WY), Size=Vector2.new(WW,TOPBAR_H), Color=T.TopBar, Filled=true, Transparency=1, ZIndex=6, Visible=true })
+    local divTop = wd("Line", { From=Vector2.new(WX,WY+TOPBAR_H), To=Vector2.new(WX+WW,WY+TOPBAR_H), Color=T.Divider, Thickness=1, ZIndex=7, Visible=true })
+
+    -- Logo text (NoFear brand)
+    local logoTxt = wd("Text", { Text="NO.FEAR", Position=Vector2.new(WX+10,WY+8), Size=15, Color=T.Pink, Outline=true, OutlineColor=T.Black, ZIndex=8, Font=Drawing.Fonts.UI, Visible=true })
+    local titleTxt = wd("Text", { Text=" | "..(cfg.Game or ""), Position=Vector2.new(WX+70,WY+9), Size=13, Color=T.TextDim, Outline=true, OutlineColor=T.Black, ZIndex=8, Font=Drawing.Fonts.UI, Visible=true })
+
+    -- Bottom bar
+    local bgBot = wd("Square", { Position=Vector2.new(WX,WY+WH-BOTTOM_H), Size=Vector2.new(WW,BOTTOM_H), Color=T.TopBar, Filled=true, Transparency=1, ZIndex=6, Visible=true })
+    local divBot = wd("Line", { From=Vector2.new(WX,WY+WH-BOTTOM_H), To=Vector2.new(WX+WW,WY+WH-BOTTOM_H), Color=T.Divider, Thickness=1, ZIndex=7, Visible=true })
+    local botTxt = wd("Text", { Text=(cfg.Discord or "discord.gg/G9QSXsB9wY").." | "..(cfg.Version or "v1.0").." | Game: "..(cfg.Game or ""), Position=Vector2.new(WX+WW/2,WY+WH-BOTTOM_H+5), Size=11, Color=T.TextDim, Center=true, Outline=true, OutlineColor=T.Black, ZIndex=8, Font=Drawing.Fonts.UI, Visible=true })
+
+    -- Sidebar background
+    local bgSide = wd("Square", { Position=Vector2.new(WX,WY+TOPBAR_H), Size=Vector2.new(SIDEBAR_W,WH-TOPBAR_H-BOTTOM_H), Color=T.Sidebar, Filled=true, Transparency=1, ZIndex=6, Visible=true })
+    local divSide = wd("Line", { From=Vector2.new(WX+SIDEBAR_W,WY+TOPBAR_H), To=Vector2.new(WX+SIDEBAR_W,WY+WH-BOTTOM_H), Color=T.Divider, Thickness=1, ZIndex=7, Visible=true })
+
+    -- Content area divider (left/right panels)
+    local contentX = WX + SIDEBAR_W + 1
+    local contentY = WY + TOPBAR_H + 1
+    local contentW = WW - SIDEBAR_W - 2
+    local contentH = WH - TOPBAR_H - BOTTOM_H - 2
+    local divContent = wd("Line", { From=Vector2.new(contentX+contentW/2,contentY), To=Vector2.new(contentX+contentW/2,contentY+contentH), Color=T.Divider, Thickness=1, ZIndex=7, Visible=true })
+
+    -- Function to update all positions when dragging
+    local allRects = { bgMain, bgOutline, bgTop, bgBot, bgSide }
+    local function updatePos(nx, ny)
+        WX, WY = nx, ny
+        bgMain.Position    = Vector2.new(WX, WY)
+        bgOutline.Position = Vector2.new(WX, WY)
+        bgTop.Position     = Vector2.new(WX, WY)
+        bgBot.Position     = Vector2.new(WX, WY+WH-BOTTOM_H)
+        bgSide.Position    = Vector2.new(WX, WY+TOPBAR_H)
+        divTop.From        = Vector2.new(WX, WY+TOPBAR_H)
+        divTop.To          = Vector2.new(WX+WW, WY+TOPBAR_H)
+        divBot.From        = Vector2.new(WX, WY+WH-BOTTOM_H)
+        divBot.To          = Vector2.new(WX+WW, WY+WH-BOTTOM_H)
+        divSide.From       = Vector2.new(WX+SIDEBAR_W, WY+TOPBAR_H)
+        divSide.To         = Vector2.new(WX+SIDEBAR_W, WY+WH-BOTTOM_H)
+        divContent.From    = Vector2.new(WX+SIDEBAR_W+1+contentW/2, WY+TOPBAR_H+1)
+        divContent.To      = Vector2.new(WX+SIDEBAR_W+1+contentW/2, WY+WH-BOTTOM_H-1)
+        logoTxt.Position   = Vector2.new(WX+10, WY+8)
+        titleTxt.Position  = Vector2.new(WX+70, WY+9)
+        botTxt.Position    = Vector2.new(WX+WW/2, WY+WH-BOTTOM_H+5)
+        -- Update tabs
+        for i, tab in ipairs(tabs) do
+            if tab.updatePos then tab.updatePos(WX, WY) end
+        end
+    end
+
+    -- Toggle visibility
+    local function setVisible(v)
+        visible = v
+        for _, d in ipairs(winDrawings) do
+            pcall(function() d.Visible = v end)
+        end
+    end
+
+    -- Input handling
+    local connections = {}
+    table.insert(connections, UIS.InputBegan:Connect(function(input, gpe)
+        if gpe then return end
+        -- Toggle key
+        local key = cfg.ToggleKey or Enum.KeyCode.K
+        if input.KeyCode == key then
+            setVisible(not visible)
+        end
+        -- Drag start
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            local mx, my = getMouse()
+            if visible and inRect(mx, my, WX, WY, WW, TOPBAR_H) then
+                dragging = true
+                dragOffX = mx - WX
+                dragOffY = my - WY
+            end
+            -- Check tab clicks
+            if visible then
+                for i, tab in ipairs(tabs) do
+                    local ty = WY + TOPBAR_H + (i-1)*34 + 1
+                    if inRect(mx, my, WX+2, ty, SIDEBAR_W-4, 30) then
+                        tab.activate()
+                        break
+                    end
+                end
+                -- Check element clicks
+                if activeTab and activeTab.handleClick then
+                    activeTab.handleClick(mx, my)
+                end
+            end
+        end
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end))
+
+    table.insert(connections, UIS.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end))
+
+    table.insert(connections, RunService.RenderStepped:Connect(function()
+        if dragging then
+            local mx, my = getMouse()
+            updatePos(mx - dragOffX, my - dragOffY)
+        end
+    end))
+
+    -- AddTab
+    function W:AddTab(tabCfg)
+        tabCfg = tabCfg or {}
+        local Tab = {}
+        local tabIdx = #tabs + 1
+        local elements = {} -- {left=[], right=[]}
+        elements.left = {}
+        elements.right = {}
+
+        -- Sidebar button drawings
+        local ty = WY + TOPBAR_H + (tabIdx-1)*34 + 2
+        local tabBg = wd("Square", { Position=Vector2.new(WX+2,ty), Size=Vector2.new(SIDEBAR_W-4,30), Color=T.Sidebar, Filled=true, Transparency=1, ZIndex=7, Visible=true })
+        local tabAccent = wd("Square", { Position=Vector2.new(WX+2,ty+6), Size=Vector2.new(3,18), Color=T.Pink, Filled=true, Transparency=1, ZIndex=8, Visible=false })
+        local tabTxt = wd("Text", { Text=(tabCfg.Icon or "")..""..( tabCfg.Name or "Tab"), Position=Vector2.new(WX+14,ty+8), Size=13, Color=T.TextDim, Outline=true, OutlineColor=T.Black, ZIndex=8, Font=Drawing.Fonts.UI, Visible=true })
+
+        -- Content area
+        local leftX  = WX + SIDEBAR_W + 5
+        local rightX = WX + SIDEBAR_W + 5 + contentW/2 + 5
+        local panelW = contentW/2 - 10
+
+        local leftScrollY  = contentY + 8
+        local rightScrollY = contentY + 8
+
+        -- Left/Right panel element containers
+        local leftEls  = {}
+        local rightEls = {}
+
+        local function activate()
+            -- Deactivate all tabs
+            for _, t in ipairs(tabs) do
+                t.tabBg.Color = T.Sidebar
+                t.tabAccent.Visible = false
+                t.tabTxt.Color = T.TextDim
+                -- Hide elements
+                for _, el in ipairs(t.leftEls) do
+                    for _, d in ipairs(el) do pcall(function() d.Visible = false end) end
+                end
+                for _, el in ipairs(t.rightEls) do
+                    for _, d in ipairs(el) do pcall(function() d.Visible = false end) end
+                end
+            end
+            -- Activate this tab
+            tabBg.Color = Color3.fromRGB(34,28,34)
+            tabAccent.Visible = true
+            tabTxt.Color = T.Pink
+            -- Show elements
+            for _, el in ipairs(leftEls) do
+                for _, d in ipairs(el) do pcall(function() d.Visible = true end) end
+            end
+            for _, el in ipairs(rightEls) do
+                for _, d in ipairs(el) do pcall(function() d.Visible = true end) end
+            end
+            activeTab = Tab
+        end
+
+        Tab.tabBg     = tabBg
+        Tab.tabAccent = tabAccent
+        Tab.tabTxt    = tabTxt
+        Tab.leftEls   = leftEls
+        Tab.rightEls  = rightEls
+        Tab.activate  = activate
+
+        Tab.updatePos = function(nx, ny)
+            local nty = ny + TOPBAR_H + (tabIdx-1)*34 + 2
+            tabBg.Position     = Vector2.new(nx+2, nty)
+            tabAccent.Position = Vector2.new(nx+2, nty+6)
+            tabTxt.Position    = Vector2.new(nx+14, nty+8)
+        end
+
+        -- Handle clicks on elements in this tab
+        Tab.handleClick = function(mx, my)
+            local function checkEls(els)
+                for _, el in ipairs(els) do
+                    if el.onClick and el.hitX then
+                        if inRect(mx, my, el.hitX, el.hitY, el.hitW, el.hitH) then
+                            el.onClick()
+                        end
+                    end
+                end
+            end
+            checkEls(leftEls)
+            checkEls(rightEls)
+        end
+
+        -- AddSection
+        function Tab:AddSection(name, side)
+            local Sec = {}
+            local isRight = (side == "right")
+            local els = isRight and rightEls or leftEls
+            local sx = isRight and rightX or leftX
+            local sy = isRight and rightScrollY or leftScrollY
+            local elDrawings = {}
+
+            -- Section header
+            local headerLine = wd("Line", { From=Vector2.new(sx, sy+1), To=Vector2.new(sx+panelW, sy+1), Color=T.Divider, Thickness=1, ZIndex=8, Visible=false })
+            local headerTxt  = wd("Text", { Text=name or "Section", Position=Vector2.new(sx, sy+4), Size=13, Color=T.Pink, Outline=true, OutlineColor=T.Black, ZIndex=9, Font=Drawing.Fonts.UI, Visible=false })
+            table.insert(elDrawings, headerLine)
+            table.insert(elDrawings, headerTxt)
+            table.insert(els, elDrawings)
+
+            if isRight then rightScrollY = rightScrollY + 24
+            else leftScrollY = leftScrollY + 24 end
+
+            -- AddToggle
+            function Sec:AddToggle(toggleCfg)
+                toggleCfg = toggleCfg or {}
+                local state = toggleCfg.Default or false
+                local elY = isRight and rightScrollY or leftScrollY
+                local togDrawings = {}
+
+                local togLbl = wd("Text", { Text=toggleCfg.Name or "Toggle", Position=Vector2.new(sx+2, elY+2), Size=13, Color=T.Text, Outline=true, OutlineColor=T.Black, ZIndex=9, Font=Drawing.Fonts.UI, Visible=false })
+                local togBg  = wd("Square", { Position=Vector2.new(sx+panelW-36, elY), Size=Vector2.new(30,16), Color=state and T.Toggle_On or T.Toggle_Off, Filled=true, Transparency=1, ZIndex=9, Visible=false })
+                local togKnob= wd("Square", { Position=Vector2.new(state and (sx+panelW-36+16) or (sx+panelW-36+2), elY+2), Size=Vector2.new(12,12), Color=T.White, Filled=true, Transparency=1, ZIndex=10, Visible=false })
+
+                table.insert(togDrawings, togLbl)
+                table.insert(togDrawings, togBg)
+                table.insert(togDrawings, togKnob)
+
+                local toggleEl = { drawings=togDrawings, hitX=sx+panelW-38, hitY=elY-2, hitW=40, hitH=20 }
+                toggleEl.onClick = function()
+                    state = not state
+                    togBg.Color  = state and T.Toggle_On or T.Toggle_Off
+                    togKnob.Position = Vector2.new(state and (sx+panelW-36+16) or (sx+panelW-36+2), elY+2)
+                    if toggleCfg.Callback then pcall(toggleCfg.Callback, state) end
+                end
+                table.insert(els, togDrawings)
+                table.insert(els, toggleEl)
+                if isRight then rightScrollY = rightScrollY + 22
+                else leftScrollY = leftScrollY + 22 end
+            end
+
+            -- AddSlider
+            function Sec:AddSlider(sliderCfg)
+                sliderCfg = sliderCfg or {}
+                local min = sliderCfg.Min or 0
+                local max = sliderCfg.Max or 100
+                local val = sliderCfg.Default or min
+                local elY = isRight and rightScrollY or leftScrollY
+                local slW = panelW - 4
+                local slDrawings = {}
+
+                local slLbl = wd("Text", { Text=sliderCfg.Name or "Slider", Position=Vector2.new(sx+2, elY+2), Size=13, Color=T.Text, Outline=true, OutlineColor=T.Black, ZIndex=9, Font=Drawing.Fonts.UI, Visible=false })
+                local slValTxt = wd("Text", { Text=tostring(val), Position=Vector2.new(sx+panelW-2, elY+2), Size=13, Color=T.Pink, Outline=true, OutlineColor=T.Black, ZIndex=9, Font=Drawing.Fonts.UI, Visible=false })
+                local slBg   = wd("Square", { Position=Vector2.new(sx+2, elY+18), Size=Vector2.new(slW, 6), Color=T.Input, Filled=true, Transparency=1, ZIndex=9, Visible=false })
+                local slFill = wd("Square", { Position=Vector2.new(sx+2, elY+18), Size=Vector2.new(slW*(val-min)/(max-min), 6), Color=T.Pink, Filled=true, Transparency=1, ZIndex=10, Visible=false })
+
+                table.insert(slDrawings, slLbl)
+                table.insert(slDrawings, slValTxt)
+                table.insert(slDrawings, slBg)
+                table.insert(slDrawings, slFill)
+
+                local draggingSlider = false
+                local slEl = { drawings=slDrawings, hitX=sx+2, hitY=elY+15, hitW=slW, hitH=12 }
+                slEl.onClick = function()
+                    draggingSlider = true
+                    local conn
+                    conn = RunService.RenderStepped:Connect(function()
+                        local mx = getMouse()
+                        local pct = math.clamp((mx - (sx+2)) / slW, 0, 1)
+                        val = math.floor(min + pct*(max-min))
+                        slFill.Size = Vector2.new(slW*pct, 6)
+                        slValTxt.Text = tostring(val)
+                        if not UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
+                            draggingSlider = false
+                            conn:Disconnect()
+                            if sliderCfg.Callback then pcall(sliderCfg.Callback, val) end
+                        end
+                    end)
+                end
+                table.insert(els, slDrawings)
+                table.insert(els, slEl)
+                if isRight then rightScrollY = rightScrollY + 32
+                else leftScrollY = leftScrollY + 32 end
+            end
+
+            -- AddLabel
+            function Sec:AddLabel(labelCfg)
+                labelCfg = labelCfg or {}
+                local elY = isRight and rightScrollY or leftScrollY
+                local lbDrawings = {}
+                local lbTxt = wd("Text", { Text=labelCfg.Text or "", Position=Vector2.new(sx+2, elY+2), Size=12, Color=labelCfg.Color or T.TextDim, Outline=true, OutlineColor=T.Black, ZIndex=9, Font=Drawing.Fonts.UI, Visible=false })
+                table.insert(lbDrawings, lbTxt)
+                table.insert(els, lbDrawings)
+                if isRight then rightScrollY = rightScrollY + 18
+                else leftScrollY = leftScrollY + 18 end
+            end
+
+            -- AddButton
+            function Sec:AddButton(btnCfg)
+                btnCfg = btnCfg or {}
+                local elY = isRight and rightScrollY or leftScrollY
+                local btnDrawings = {}
+                local btnBg  = wd("Square", { Position=Vector2.new(sx+2, elY), Size=Vector2.new(panelW-4, 20), Color=T.Input, Filled=true, Transparency=1, ZIndex=9, Visible=false })
+                local btnTxt = wd("Text", { Text=btnCfg.Name or "Button", Position=Vector2.new(sx+panelW/2, elY+4), Size=13, Color=T.Text, Center=true, Outline=true, OutlineColor=T.Black, ZIndex=10, Font=Drawing.Fonts.UI, Visible=false })
+                table.insert(btnDrawings, btnBg)
+                table.insert(btnDrawings, btnTxt)
+                local btnEl = { drawings=btnDrawings, hitX=sx+2, hitY=elY, hitW=panelW-4, hitH=20 }
+                btnEl.onClick = function()
+                    if btnCfg.Callback then pcall(btnCfg.Callback) end
+                end
+                table.insert(els, btnDrawings)
+                table.insert(els, btnEl)
+                if isRight then rightScrollY = rightScrollY + 26
+                else leftScrollY = leftScrollY + 26 end
+            end
+
+            -- AddDropdown
+            function Sec:AddDropdown(dropCfg)
+                dropCfg = dropCfg or {}
+                local options = dropCfg.Options or {}
+                local selected = dropCfg.Default or options[1] or ""
+                local elY = isRight and rightScrollY or leftScrollY
+                local dpDrawings = {}
+                local dpLbl = wd("Text", { Text=dropCfg.Name or "Dropdown", Position=Vector2.new(sx+2, elY+2), Size=13, Color=T.Text, Outline=true, OutlineColor=T.Black, ZIndex=9, Font=Drawing.Fonts.UI, Visible=false })
+                local dpBg  = wd("Square", { Position=Vector2.new(sx+2, elY+18), Size=Vector2.new(panelW-4, 20), Color=T.Input, Filled=true, Transparency=1, ZIndex=9, Visible=false })
+                local dpTxt = wd("Text", { Text=selected, Position=Vector2.new(sx+6, elY+22), Size=13, Color=T.Text, Outline=true, OutlineColor=T.Black, ZIndex=10, Font=Drawing.Fonts.UI, Visible=false })
+                local dpArrow = wd("Text", { Text="v", Position=Vector2.new(sx+panelW-12, elY+22), Size=12, Color=T.Pink, Outline=true, OutlineColor=T.Black, ZIndex=10, Font=Drawing.Fonts.UI, Visible=false })
+                table.insert(dpDrawings, dpLbl)
+                table.insert(dpDrawings, dpBg)
+                table.insert(dpDrawings, dpTxt)
+                table.insert(dpDrawings, dpArrow)
+
+                local optIdx = 1
+                for i, v in ipairs(options) do if v == selected then optIdx = i end end
+
+                local dpEl = { drawings=dpDrawings, hitX=sx+2, hitY=elY+16, hitW=panelW-4, hitH=24 }
+                dpEl.onClick = function()
+                    optIdx = optIdx % #options + 1
+                    selected = options[optIdx]
+                    dpTxt.Text = selected
+                    if dropCfg.Callback then pcall(dropCfg.Callback, selected) end
+                end
+                table.insert(els, dpDrawings)
+                table.insert(els, dpEl)
+                if isRight then rightScrollY = rightScrollY + 44
+                else leftScrollY = leftScrollY + 44 end
+            end
+
+            return Sec
+        end
+
+        table.insert(tabs, Tab)
+        if #tabs == 1 then activate() end
+        return Tab
+    end
+
+    -- Destroy
+    function W:Destroy()
+        for _, c in ipairs(connections) do pcall(function() c:Disconnect() end) end
+        for _, d in ipairs(winDrawings) do pcall(function() d:Remove() end) end
+    end
+
+    return W
+end
+
+-- Destroy all drawings
+function DrawLib:DestroyAll()
+    for _, d in ipairs(drawings) do pcall(function() d:Remove() end) end
+    drawings = {}
+end
+
+return DrawLib
