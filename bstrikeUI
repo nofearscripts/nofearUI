@@ -1,155 +1,153 @@
---// NO.FEAR DRAWING UI LIBRARY v3.0
+--// NO.FEAR DRAWING UI LIBRARY v4.0
+--// Pure Drawing API - Undetected by BloxStrike anti-cheat
 local DrawLib = {}
 local UIS = game:GetService("UserInputService")
 local RS  = game:GetService("RunService")
 
 local T = {
-    BG       = Color3.fromRGB(28,28,28),
-    Sidebar  = Color3.fromRGB(20,20,20),
-    TopBar   = Color3.fromRGB(18,18,18),
-    Divider  = Color3.fromRGB(50,50,50),
-    Pink     = Color3.fromRGB(255,105,180),
-    Text     = Color3.fromRGB(220,220,220),
-    TextDim  = Color3.fromRGB(110,110,110),
-    Input    = Color3.fromRGB(38,38,38),
-    TOn      = Color3.fromRGB(255,105,180),
-    TOff     = Color3.fromRGB(55,55,55),
-    White    = Color3.fromRGB(255,255,255),
-    Black    = Color3.fromRGB(0,0,0),
-    ActiveBG = Color3.fromRGB(38,28,38),
+    BG      = Color3.fromRGB(28,28,28),
+    Sidebar = Color3.fromRGB(20,20,20),
+    TopBar  = Color3.fromRGB(18,18,18),
+    Divider = Color3.fromRGB(50,50,50),
+    Pink    = Color3.fromRGB(255,105,180),
+    Text    = Color3.fromRGB(220,220,220),
+    TextDim = Color3.fromRGB(110,110,110),
+    Input   = Color3.fromRGB(38,38,38),
+    TOn     = Color3.fromRGB(255,105,180),
+    TOff    = Color3.fromRGB(55,55,55),
+    White   = Color3.fromRGB(255,255,255),
+    Black   = Color3.fromRGB(0,0,0),
+    ActiveBG= Color3.fromRGB(38,28,38),
 }
-
-local function mouse() local p=UIS:GetMouseLocation() return p.X,p.Y end
-local function hit(mx,my,x,y,w,h) return mx>=x and mx<=x+w and my>=y and my<=y+h end
 
 function DrawLib:CreateWindow(cfg)
     cfg = cfg or {}
     local W = {}
-    local tabs        = {}
-    local activeTab   = nil
-    local visible     = true
-    local allD        = {}   -- ALL drawings ever created
-    local handlers    = {}   -- click handlers {tab,x,y,w,h,fn}
-    local dragging    = false
-    local dox,doy     = 0,0
+    local tabs      = {}
+    local activeTab = nil
+    local visible   = true
+    local allD      = {}
+    local handlers  = {}
+    local dragging  = false
+    local dox,doy   = 0,0
 
-    local WX,WY = 160,90
+    -- Window dimensions
     local WW,WH = 680,500
-    local TBH   = 30
-    local SBW   = 148
-    local BTH   = 20
-    local CX    = WX+SBW+1
-    local CY    = WY+TBH+1
-    local CW    = WW-SBW-2
-    local CH    = WH-TBH-BTH-2
+    local TBH   = 30  -- top bar height
+    local BBH   = 20  -- bottom bar height
+    local SBW   = 148 -- sidebar width
+    local LPW   = math.floor((WW-SBW-2)/2)-8  -- left panel width
+    local RPW   = math.floor((WW-SBW-2)/2)-8  -- right panel width
 
-    local function D(kind,props)
-        local d=Drawing.new(kind)
-        for k,v in pairs(props) do d[k]=v end
-        table.insert(allD,d)
+    -- Window position (mutable)
+    local pos = {x=160, y=90}
+
+    -- Helper: get content area origins based on current pos
+    local function getContentOrigins()
+        local LX = pos.x + SBW + 6
+        local RX = pos.x + SBW + 6 + LPW + 10
+        local CY = pos.y + TBH + 6
+        return LX, RX, CY
+    end
+
+    -- Create a drawing and track it
+    local function D(kind, props)
+        local d = Drawing.new(kind)
+        for k,v in pairs(props) do d[k] = v end
+        table.insert(allD, d)
         return d
     end
 
+    -- Show/hide all drawings
     local function setVis(v)
-        visible=v
-        for _,d in ipairs(allD) do pcall(function() d.Visible=v end) end
+        visible = v
+        for _,d in ipairs(allD) do
+            pcall(function() d.Visible = v end)
+        end
     end
 
-    -- Core window drawings
-    local fBG    = D("Square",{Position=Vector2.new(WX,WY),Size=Vector2.new(WW,WH),Color=T.BG,Filled=true,Transparency=1,ZIndex=1,Visible=true})
-    local fOut   = D("Square",{Position=Vector2.new(WX,WY),Size=Vector2.new(WW,WH),Color=T.Divider,Filled=false,Thickness=1,ZIndex=2,Visible=true})
-    local fTop   = D("Square",{Position=Vector2.new(WX,WY),Size=Vector2.new(WW,TBH),Color=T.TopBar,Filled=true,Transparency=1,ZIndex=2,Visible=true})
-    local fTopD  = D("Line",{From=Vector2.new(WX,WY+TBH),To=Vector2.new(WX+WW,WY+TBH),Color=T.Divider,Thickness=1,ZIndex=3,Visible=true})
-    local fLogo  = D("Text",{Text="NO.FEAR",Position=Vector2.new(WX+10,WY+8),Size=15,Color=T.Pink,Outline=true,OutlineColor=T.Black,ZIndex=4,Font=Drawing.Fonts.UI,Visible=true})
-    local fSub   = D("Text",{Text=" | "..(cfg.Game or ""),Position=Vector2.new(WX+72,WY+9),Size=13,Color=T.TextDim,Outline=true,OutlineColor=T.Black,ZIndex=4,Font=Drawing.Fonts.UI,Visible=true})
-    local fBot   = D("Square",{Position=Vector2.new(WX,WY+WH-BTH),Size=Vector2.new(WW,BTH),Color=T.TopBar,Filled=true,Transparency=1,ZIndex=2,Visible=true})
-    local fBotD  = D("Line",{From=Vector2.new(WX,WY+WH-BTH),To=Vector2.new(WX+WW,WY+WH-BTH),Color=T.Divider,Thickness=1,ZIndex=3,Visible=true})
-    local fBotT  = D("Text",{Text=(cfg.Discord or "discord.gg/G9QSXsB9wY").." | "..(cfg.Version or "v1.0").." | "..(cfg.Game or ""),Position=Vector2.new(WX+WW/2,WY+WH-BTH+4),Size=11,Color=T.TextDim,Center=true,Outline=true,OutlineColor=T.Black,ZIndex=4,Font=Drawing.Fonts.UI,Visible=true})
-    local fSide  = D("Square",{Position=Vector2.new(WX,WY+TBH),Size=Vector2.new(SBW,WH-TBH-BTH),Color=T.Sidebar,Filled=true,Transparency=1,ZIndex=2,Visible=true})
-    local fSideD = D("Line",{From=Vector2.new(WX+SBW,WY+TBH),To=Vector2.new(WX+SBW,WY+WH-BTH),Color=T.Divider,Thickness=1,ZIndex=3,Visible=true})
-    local fMidD  = D("Line",{From=Vector2.new(CX+CW/2,CY),To=Vector2.new(CX+CW/2,CY+CH),Color=T.Divider,Thickness=1,ZIndex=3,Visible=true})
+    -- Reposition a drawing by offset
+    local function repos(d, ox, oy)
+        pcall(function()
+            if d.Position then
+                d.Position = Vector2.new(d.Position.X + ox, d.Position.Y + oy)
+            elseif d.From then
+                d.From = Vector2.new(d.From.X + ox, d.From.Y + oy)
+                d.To   = Vector2.new(d.To.X + ox,   d.To.Y + oy)
+            end
+        end)
+    end
+
+    -- Core window frames
+    local fBG   = D("Square",{Position=Vector2.new(pos.x,pos.y),Size=Vector2.new(WW,WH),Color=T.BG,Filled=true,Transparency=1,ZIndex=1,Visible=true})
+    local fOut  = D("Square",{Position=Vector2.new(pos.x,pos.y),Size=Vector2.new(WW,WH),Color=T.Divider,Filled=false,Thickness=1,ZIndex=2,Visible=true})
+    local fTop  = D("Square",{Position=Vector2.new(pos.x,pos.y),Size=Vector2.new(WW,TBH),Color=T.TopBar,Filled=true,Transparency=1,ZIndex=2,Visible=true})
+    local fTopD = D("Line",{From=Vector2.new(pos.x,pos.y+TBH),To=Vector2.new(pos.x+WW,pos.y+TBH),Color=T.Divider,Thickness=1,ZIndex=3,Visible=true})
+    local fLogo = D("Text",{Text="NO.FEAR",Position=Vector2.new(pos.x+10,pos.y+8),Size=15,Color=T.Pink,Outline=true,OutlineColor=T.Black,ZIndex=4,Font=Drawing.Fonts.UI,Visible=true})
+    local fGame = D("Text",{Text=" | "..(cfg.Game or ""),Position=Vector2.new(pos.x+76,pos.y+9),Size=13,Color=T.TextDim,Outline=true,OutlineColor=T.Black,ZIndex=4,Font=Drawing.Fonts.UI,Visible=true})
+    local fSide = D("Square",{Position=Vector2.new(pos.x,pos.y+TBH),Size=Vector2.new(SBW,WH-TBH-BBH),Color=T.Sidebar,Filled=true,Transparency=1,ZIndex=2,Visible=true})
+    local fSidD = D("Line",{From=Vector2.new(pos.x+SBW,pos.y+TBH),To=Vector2.new(pos.x+SBW,pos.y+WH-BBH),Color=T.Divider,Thickness=1,ZIndex=3,Visible=true})
+    local fMidD = D("Line",{From=Vector2.new(pos.x+SBW+LPW+14,pos.y+TBH),To=Vector2.new(pos.x+SBW+LPW+14,pos.y+WH-BBH),Color=T.Divider,Thickness=1,ZIndex=3,Visible=true})
+    local fBot  = D("Square",{Position=Vector2.new(pos.x,pos.y+WH-BBH),Size=Vector2.new(WW,BBH),Color=T.TopBar,Filled=true,Transparency=1,ZIndex=2,Visible=true})
+    local fBotD = D("Line",{From=Vector2.new(pos.x,pos.y+WH-BBH),To=Vector2.new(pos.x+WW,pos.y+WH-BBH),Color=T.Divider,Thickness=1,ZIndex=3,Visible=true})
+    local fBotT = D("Text",{Text=(cfg.Discord or "discord.gg/G9QSXsB9wY").." | "..(cfg.Version or "v1.0"),Position=Vector2.new(pos.x+WW/2,pos.y+WH-BBH+4),Size=11,Color=T.TextDim,Center=true,Outline=true,OutlineColor=T.Black,ZIndex=4,Font=Drawing.Fonts.UI,Visible=true})
+
+    -- Core frames list for drag repositioning
+    local coreDs = {fBG,fOut,fTop,fTopD,fLogo,fGame,fSide,fSidD,fMidD,fBot,fBotD,fBotT}
 
     -- Stars
-    local starDrawings = {}
+    local starPool = {}
+    local starTimer = 0
     local function spawnStar()
-        local vp = workspace.CurrentCamera.ViewportSize
-        local x  = math.random(WX-20, WX+WW+20)
-        local y  = WY - 10
-        local spd= math.random(40,120)
+        local x  = pos.x + math.random(0, WW)
+        local y  = pos.y - 5
+        local spd= math.random(50,130)
         local sz = math.random(1,3)
         local s1 = Drawing.new("Square")
         s1.Size=Vector2.new(sz,sz*3); s1.Position=Vector2.new(x,y)
-        s1.Color=T.White; s1.Filled=true; s1.Transparency=0.7; s1.ZIndex=10; s1.Visible=visible
+        s1.Color=T.White; s1.Filled=true; s1.Transparency=0.65; s1.ZIndex=10; s1.Visible=true
         local s2 = Drawing.new("Square")
         s2.Size=Vector2.new(sz*3,sz); s2.Position=Vector2.new(x-sz,y+sz)
-        s2.Color=T.White; s2.Filled=true; s2.Transparency=0.7; s2.ZIndex=10; s2.Visible=visible
-        table.insert(starDrawings,{s1,s2,y=y,spd=spd,done=false})
-        table.insert(allD,s1); table.insert(allD,s2)
+        s2.Color=T.White; s2.Filled=true; s2.Transparency=0.65; s2.ZIndex=10; s2.Visible=true
+        table.insert(starPool,{s1=s1,s2=s2,y=y,spd=spd})
     end
 
-    local starTimer=0
-    RS.RenderStepped:Connect(function(dt)
-        -- Drag
-        if dragging then
-            local mx,my=mouse()
-            local nx,ny=mx-dox,my-doy
-            WX,WY=nx,ny
-            CX=WX+SBW+1; CY=WY+TBH+1
-            fBG.Position=Vector2.new(WX,WY)
-            fOut.Position=Vector2.new(WX,WY)
-            fTop.Position=Vector2.new(WX,WY)
-            fTopD.From=Vector2.new(WX,WY+TBH); fTopD.To=Vector2.new(WX+WW,WY+TBH)
-            fLogo.Position=Vector2.new(WX+10,WY+8)
-            fSub.Position=Vector2.new(WX+72,WY+9)
-            fBot.Position=Vector2.new(WX,WY+WH-BTH)
-            fBotD.From=Vector2.new(WX,WY+WH-BTH); fBotD.To=Vector2.new(WX+WW,WY+WH-BTH)
-            fBotT.Position=Vector2.new(WX+WW/2,WY+WH-BTH+4)
-            fSide.Position=Vector2.new(WX,WY+TBH)
-            fSideD.From=Vector2.new(WX+SBW,WY+TBH); fSideD.To=Vector2.new(WX+SBW,WY+WH-BTH)
-            fMidD.From=Vector2.new(CX+CW/2,CY); fMidD.To=Vector2.new(CX+CW/2,CY+CH)
-            for _,t in ipairs(tabs) do t._reposFn(WX,WY) end
-        end
-        -- Stars
-        if visible then
-            starTimer=starTimer+dt
-            if starTimer>0.4 then starTimer=0; spawnStar() end
-            for _,star in ipairs(starDrawings) do
-                if not star.done then
-                    star.y=star.y+star.spd*dt
-                    star[1].Position=Vector2.new(star[1].Position.X,star.y)
-                    star[2].Position=Vector2.new(star[2].Position.X,star.y+star[1].Size.Y/2)
-                    if star.y > WY+WH+20 then
-                        star[1].Visible=false; star[2].Visible=false; star.done=true
-                    end
-                end
-            end
-        end
-    end)
-
+    -- Input handling
     UIS.InputBegan:Connect(function(inp,gpe)
         if gpe then return end
-        -- Toggle key
-        if inp.KeyCode==(cfg.ToggleKey or Enum.KeyCode.K) then
-            setVis(not visible)
-            return
+        if inp.KeyCode == (cfg.ToggleKey or Enum.KeyCode.K) then
+            setVis(not visible); return
         end
-        if inp.UserInputType~=Enum.UserInputType.MouseButton1 then return end
+        if inp.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
         if not visible then return end
-        local mx,my=mouse()
-        -- Drag start
-        if hit(mx,my,WX,WY,WW,TBH) then
-            dragging=true; dox=mx-WX; doy=my-WY
-            return
+        local mp = UIS:GetMouseLocation()
+        local mx,my = mp.X, mp.Y
+        -- Drag start: click on top bar
+        if mx>=pos.x and mx<=pos.x+WW and my>=pos.y and my<=pos.y+TBH then
+            dragging=true; dox=mx-pos.x; doy=my-pos.y; return
         end
         -- Tab clicks
-        for _,t in ipairs(tabs) do
-            if hit(mx,my,t._bx,t._by,SBW-4,30) then
-                t._activate(); return
+        for i,t in ipairs(tabs) do
+            local ty = pos.y+TBH+(i-1)*34+2
+            if mx>=pos.x+2 and mx<=pos.x+SBW-2 and my>=ty and my<=ty+30 then
+                -- Set active tab
+                for _,ot in ipairs(tabs) do
+                    ot._tabBG.Color  = T.Sidebar
+                    ot._tabAcc.Visible = false
+                    ot._tabTxt.Color = T.TextDim
+                    for _,d in ipairs(ot._els) do pcall(function() d.Visible=false end) end
+                end
+                t._tabBG.Color   = T.ActiveBG
+                t._tabAcc.Visible= true
+                t._tabTxt.Color  = T.Pink
+                for _,d in ipairs(t._els) do pcall(function() d.Visible=true end) end
+                activeTab = t
+                return
             end
         end
         -- Element clicks
         for _,h in ipairs(handlers) do
-            if h.tab==activeTab and hit(mx,my,h.x,h.y,h.w,h.h) then
+            if h.tab==activeTab and mx>=h.x and mx<=h.x+h.w and my>=h.y and my<=h.y+h.h then
                 h.fn(); return
             end
         end
@@ -159,96 +157,135 @@ function DrawLib:CreateWindow(cfg)
         if inp.UserInputType==Enum.UserInputType.MouseButton1 then dragging=false end
     end)
 
-    function W:AddTab(tcfg)
-        tcfg=tcfg or {}
-        local Tab={}
-        local idx=#tabs+1
-        local tabD={}  -- only Drawing objects for this tab content
+    -- RenderStepped: drag + stars
+    RS.RenderStepped:Connect(function(dt)
+        if dragging then
+            local mp = UIS:GetMouseLocation()
+            local nx = mp.X - dox
+            local ny = mp.Y - doy
+            local ox = nx - pos.x
+            local oy = ny - pos.y
+            pos.x = nx; pos.y = ny
+            -- Move all core drawings
+            for _,d in ipairs(coreDs) do repos(d,ox,oy) end
+            -- Move all tab drawings (sidebar buttons + elements)
+            for _,t in ipairs(tabs) do
+                for _,d in ipairs(t._allDs) do repos(d,ox,oy) end
+            end
+            -- Update handler positions
+            for _,h in ipairs(handlers) do
+                h.x=h.x+ox; h.y=h.y+oy
+            end
+        end
+        -- Stars
+        if visible then
+            starTimer=starTimer+dt
+            if starTimer>0.5 then starTimer=0; spawnStar() end
+            local alive={}
+            for _,s in ipairs(starPool) do
+                s.y=s.y+s.spd*dt
+                s.s1.Position=Vector2.new(s.s1.Position.X,s.y)
+                s.s2.Position=Vector2.new(s.s2.Position.X,s.y+s.s1.Size.Y/2)
+                if s.y < pos.y+WH+20 then
+                    table.insert(alive,s)
+                else
+                    s.s1.Visible=false; s.s2.Visible=false
+                    s.s1:Remove(); s.s2:Remove()
+                end
+            end
+            starPool=alive
+        end
+    end)
 
-        local LX=WX+SBW+6
-        local RX=WX+SBW+6+CW/2+1
-        local PW=CW/2-12
-        local leftY=WY+TBH+10
-        local rightY=WY+TBH+10
+    -- AddTab
+    function W:AddTab(tcfg)
+        tcfg = tcfg or {}
+        local Tab  = {}
+        local idx  = #tabs+1
+        local els  = {}  -- drawings shown/hidden when tab is active
+        local allDs= {}  -- ALL drawings for this tab (sidebar + content)
+
+        -- Current Y cursors for left/right columns (relative to content area)
+        local leftOffY  = 0
+        local rightOffY = 0
 
         -- Sidebar button
-        local function getBY() return WY+TBH+(idx-1)*34+2 end
-        local tBG = D("Square",{Position=Vector2.new(WX+2,getBY()),Size=Vector2.new(SBW-4,30),Color=T.Sidebar,Filled=true,Transparency=1,ZIndex=3,Visible=true})
-        local tAcc= D("Square",{Position=Vector2.new(WX+2,getBY()+6),Size=Vector2.new(3,18),Color=T.Pink,Filled=true,Transparency=1,ZIndex=4,Visible=false})
-        local tTxt= D("Text",{Text=tcfg.Name or "Tab",Position=Vector2.new(WX+12,getBY()+9),Size=13,Color=T.TextDim,Outline=true,OutlineColor=T.Black,ZIndex=4,Font=Drawing.Fonts.UI,Visible=true})
+        local function sBy() return pos.y+TBH+(idx-1)*34+2 end
+        local tBG  = D("Square",{Position=Vector2.new(pos.x+2,sBy()),Size=Vector2.new(SBW-4,30),Color=T.Sidebar,Filled=true,Transparency=1,ZIndex=3,Visible=true})
+        local tAcc = D("Square",{Position=Vector2.new(pos.x+2,sBy()+6),Size=Vector2.new(3,18),Color=T.Pink,Filled=true,Transparency=1,ZIndex=4,Visible=false})
+        local tTxt = D("Text",{Text=tcfg.Name or "Tab",Position=Vector2.new(pos.x+12,sBy()+9),Size=13,Color=T.TextDim,Outline=true,OutlineColor=T.Black,ZIndex=4,Font=Drawing.Fonts.UI,Visible=true})
 
-        Tab._bx=WX+2; Tab._by=getBY()
+        table.insert(allDs,tBG); table.insert(allDs,tAcc); table.insert(allDs,tTxt)
+        Tab._tabBG=tBG; Tab._tabAcc=tAcc; Tab._tabTxt=tTxt
+        Tab._els=els; Tab._allDs=allDs
 
-        local function activate()
-            for _,t in ipairs(tabs) do
-                t._tabBG.Color=T.Sidebar
-                t._tabAcc.Visible=false
-                t._tabTxt.Color=T.TextDim
-                for _,d in ipairs(t._tabD) do pcall(function() d.Visible=false end) end
-            end
-            tBG.Color=T.ActiveBG
-            tAcc.Visible=true
-            tTxt.Color=T.Pink
-            for _,d in ipairs(tabD) do pcall(function() d.Visible=true end) end
+        table.insert(tabs,Tab)
+        if #tabs==1 then
+            tBG.Color=T.ActiveBG; tAcc.Visible=true; tTxt.Color=T.Pink
             activeTab=Tab
         end
 
-        Tab._tabBG=tBG; Tab._tabAcc=tAcc; Tab._tabTxt=tTxt
-        Tab._tabD=tabD
-        Tab._activate=activate
-        Tab._reposFn=function(nx,ny)
-            local nby=ny+TBH+(idx-1)*34+2
-            tBG.Position=Vector2.new(nx+2,nby)
-            tAcc.Position=Vector2.new(nx+2,nby+6)
-            tTxt.Position=Vector2.new(nx+12,nby+9)
-            Tab._bx=nx+2; Tab._by=nby
-        end
-
-        function Tab:AddSection(sname,side)
-            local Sec={}
-            local isR=(side=="right")
-            local sx=isR and RX or LX
-
-            local hY=isR and rightY or leftY
-            local hdr=D("Text",{Text=sname or "",Position=Vector2.new(sx,hY),Size=13,Color=T.Pink,Outline=true,OutlineColor=T.Black,ZIndex=5,Font=Drawing.Fonts.UI,Visible=false})
-            local hdl=D("Line",{From=Vector2.new(sx,hY+15),To=Vector2.new(sx+PW,hY+15),Color=T.Divider,Thickness=1,ZIndex=4,Visible=false})
-            table.insert(tabD,hdr); table.insert(tabD,hdl)
-            if isR then rightY=rightY+24 else leftY=leftY+24 end
-
-            local function regEl(ds,x,y,w,h,fn)
-                for _,d in ipairs(ds) do table.insert(tabD,d) end
-                table.insert(handlers,{tab=Tab,x=x,y=y,w=w,h=h,fn=fn})
+        -- AddSection
+        function Tab:AddSection(sname, side)
+            local Sec   = {}
+            local isR   = (side=="right")
+            local function getX()
+                local LX,RX,_ = getContentOrigins()
+                return isR and RX or LX
+            end
+            local function getBaseY()
+                local _,_,CY = getContentOrigins()
+                return CY + (isR and rightOffY or leftOffY)
             end
 
+            -- Section header
+            local hx = getX(); local hy = getBaseY()
+            local hdr = D("Text",{Text=sname or "",Position=Vector2.new(hx,hy),Size=13,Color=T.Pink,Outline=true,OutlineColor=T.Black,ZIndex=5,Font=Drawing.Fonts.UI,Visible=false})
+            local hdl = D("Line",{From=Vector2.new(hx,hy+16),To=Vector2.new(hx+LPW,hy+16),Color=T.Divider,Thickness=1,ZIndex=4,Visible=false})
+            table.insert(els,hdr); table.insert(els,hdl)
+            table.insert(allDs,hdr); table.insert(allDs,hdl)
+            if isR then rightOffY=rightOffY+24 else leftOffY=leftOffY+24 end
+
+            local function regEl(ds, ox, oy, ew, eh, fn)
+                local bx = getX()+ox; local by = getBaseY()+oy
+                for _,d in ipairs(ds) do
+                    table.insert(els,d); table.insert(allDs,d)
+                end
+                table.insert(handlers,{tab=Tab,x=bx,y=by,w=ew,h=eh,fn=fn})
+            end
+
+            -- AddToggle
             function Sec:AddToggle(c)
                 c=c or {}
-                local state=c.Default or false
-                local ey=isR and rightY or leftY
-                local lbl =D("Text",{Text=c.Name or "Toggle",Position=Vector2.new(sx+2,ey+3),Size=13,Color=T.Text,Outline=true,OutlineColor=T.Black,ZIndex=5,Font=Drawing.Fonts.UI,Visible=false})
-                local tbg =D("Square",{Position=Vector2.new(sx+PW-30,ey+2),Size=Vector2.new(28,14),Color=state and T.TOn or T.TOff,Filled=true,Transparency=1,ZIndex=5,Visible=false})
-                local tknob=D("Square",{Position=Vector2.new(state and (sx+PW-30+14) or (sx+PW-30+2),ey+3),Size=Vector2.new(10,10),Color=T.White,Filled=true,Transparency=1,ZIndex=6,Visible=false})
-                regEl({lbl,tbg,tknob},sx+PW-32,ey,34,18,function()
+                local state = c.Default or false
+                local oy    = isR and rightOffY or leftOffY
+                local lbl  = D("Text",{Text=c.Name or "",Position=Vector2.new(getX()+2,getBaseY()+oy+3),Size=13,Color=T.Text,Outline=true,OutlineColor=T.Black,ZIndex=5,Font=Drawing.Fonts.UI,Visible=false})
+                local tbg  = D("Square",{Position=Vector2.new(getX()+LPW-30,getBaseY()+oy+2),Size=Vector2.new(28,14),Color=state and T.TOn or T.TOff,Filled=true,Transparency=1,ZIndex=5,Visible=false})
+                local tknob= D("Square",{Position=Vector2.new(getX()+LPW-(state and 14 or 28),getBaseY()+oy+3),Size=Vector2.new(10,10),Color=T.White,Filled=true,Transparency=1,ZIndex=6,Visible=false})
+                regEl({lbl,tbg,tknob},LPW-32,oy,36,18,function()
                     state=not state
                     tbg.Color=state and T.TOn or T.TOff
-                    tknob.Position=Vector2.new(state and (sx+PW-30+14) or (sx+PW-30+2),ey+3)
+                    tknob.Position=Vector2.new(getX()+LPW-(state and 14 or 28),tknob.Position.Y)
                     if c.Callback then pcall(c.Callback,state) end
                 end)
-                if isR then rightY=rightY+22 else leftY=leftY+22 end
+                if isR then rightOffY=rightOffY+22 else leftOffY=leftOffY+22 end
             end
 
+            -- AddSlider
             function Sec:AddSlider(c)
                 c=c or {}
-                local mn,mx2,val=c.Min or 0,c.Max or 100,c.Default or 0
-                local ey=isR and rightY or leftY
-                local slW=PW-4
-                local lbl   =D("Text",{Text=c.Name or "Slider",Position=Vector2.new(sx+2,ey+2),Size=13,Color=T.Text,Outline=true,OutlineColor=T.Black,ZIndex=5,Font=Drawing.Fonts.UI,Visible=false})
-                local vTxt  =D("Text",{Text=tostring(val),Position=Vector2.new(sx+PW,ey+2),Size=12,Color=T.Pink,Outline=true,OutlineColor=T.Black,ZIndex=5,Font=Drawing.Fonts.UI,Visible=false})
-                local sbg   =D("Square",{Position=Vector2.new(sx+2,ey+18),Size=Vector2.new(slW,5),Color=T.Input,Filled=true,Transparency=1,ZIndex=5,Visible=false})
-                local sfill =D("Square",{Position=Vector2.new(sx+2,ey+18),Size=Vector2.new(slW*((val-mn)/math.max(mx2-mn,1)),5),Color=T.Pink,Filled=true,Transparency=1,ZIndex=6,Visible=false})
-                regEl({lbl,vTxt,sbg,sfill},sx+2,ey+15,slW,12,function()
+                local mn,mx2,val = c.Min or 0, c.Max or 100, c.Default or 0
+                local oy = isR and rightOffY or leftOffY
+                local slW = LPW-4
+                local lbl  = D("Text",{Text=c.Name or "",Position=Vector2.new(getX()+2,getBaseY()+oy+2),Size=13,Color=T.Text,Outline=true,OutlineColor=T.Black,ZIndex=5,Font=Drawing.Fonts.UI,Visible=false})
+                local vTxt = D("Text",{Text=tostring(val),Position=Vector2.new(getX()+LPW-2,getBaseY()+oy+2),Size=12,Color=T.Pink,Outline=true,OutlineColor=T.Black,ZIndex=5,Font=Drawing.Fonts.UI,Visible=false})
+                local sbg  = D("Square",{Position=Vector2.new(getX()+2,getBaseY()+oy+18),Size=Vector2.new(slW,5),Color=T.Input,Filled=true,Transparency=1,ZIndex=5,Visible=false})
+                local sfill= D("Square",{Position=Vector2.new(getX()+2,getBaseY()+oy+18),Size=Vector2.new(slW*((val-mn)/math.max(mx2-mn,1)),5),Color=T.Pink,Filled=true,Transparency=1,ZIndex=6,Visible=false})
+                regEl({lbl,vTxt,sbg,sfill},2,oy+15,slW,12,function()
+                    local sliding=true
                     local conn; conn=RS.RenderStepped:Connect(function()
-                        local smx=mouse()
-                        local pct=math.clamp((smx-(sx+2))/slW,0,1)
+                        local mp2=UIS:GetMouseLocation()
+                        local pct=math.clamp((mp2.X-(getX()+2))/slW,0,1)
                         val=math.floor(mn+pct*(mx2-mn))
                         sfill.Size=Vector2.new(slW*pct,5)
                         vTxt.Text=tostring(val)
@@ -258,57 +295,74 @@ function DrawLib:CreateWindow(cfg)
                         end
                     end)
                 end)
-                if isR then rightY=rightY+30 else leftY=leftY+30 end
+                if isR then rightOffY=rightOffY+30 else leftOffY=leftOffY+30 end
             end
 
-            function Sec:AddLabel(c)
-                c=c or {}
-                local ey=isR and rightY or leftY
-                local lbl=D("Text",{Text=c.Text or "",Position=Vector2.new(sx+2,ey+2),Size=12,Color=c.Color or T.TextDim,Outline=true,OutlineColor=T.Black,ZIndex=5,Font=Drawing.Fonts.UI,Visible=false})
-                table.insert(tabD,lbl)
-                if isR then rightY=rightY+18 else leftY=leftY+18 end
-            end
-
-            function Sec:AddButton(c)
-                c=c or {}
-                local ey=isR and rightY or leftY
-                local bbg =D("Square",{Position=Vector2.new(sx+2,ey),Size=Vector2.new(PW-4,20),Color=T.Input,Filled=true,Transparency=1,ZIndex=5,Visible=false})
-                local btxt=D("Text",{Text=c.Name or "Button",Position=Vector2.new(sx+PW/2,ey+4),Size=13,Color=T.Text,Center=true,Outline=true,OutlineColor=T.Black,ZIndex=6,Font=Drawing.Fonts.UI,Visible=false})
-                regEl({bbg,btxt},sx+2,ey,PW-4,20,function()
-                    if c.Callback then pcall(c.Callback) end
-                end)
-                if isR then rightY=rightY+26 else leftY=leftY+26 end
-            end
-
+            -- AddDropdown
             function Sec:AddDropdown(c)
                 c=c or {}
                 local opts=c.Options or {}
-                local sel=c.Default or opts[1] or ""
+                local sel=c.Default or (opts[1] or "")
                 local oidx=1
                 for i,v in ipairs(opts) do if v==sel then oidx=i end end
-                local ey=isR and rightY or leftY
-                local dlbl=D("Text",{Text=c.Name or "Dropdown",Position=Vector2.new(sx+2,ey+2),Size=13,Color=T.Text,Outline=true,OutlineColor=T.Black,ZIndex=5,Font=Drawing.Fonts.UI,Visible=false})
-                local dbg =D("Square",{Position=Vector2.new(sx+2,ey+18),Size=Vector2.new(PW-4,18),Color=T.Input,Filled=true,Transparency=1,ZIndex=5,Visible=false})
-                local dtxt=D("Text",{Text=sel,Position=Vector2.new(sx+6,ey+21),Size=12,Color=T.Text,Outline=true,OutlineColor=T.Black,ZIndex=6,Font=Drawing.Fonts.UI,Visible=false})
-                local darr=D("Text",{Text="v",Position=Vector2.new(sx+PW-8,ey+21),Size=11,Color=T.Pink,Outline=true,OutlineColor=T.Black,ZIndex=6,Font=Drawing.Fonts.UI,Visible=false})
-                regEl({dlbl,dbg,dtxt,darr},sx+2,ey+16,PW-4,22,function()
+                local oy=isR and rightOffY or leftOffY
+                local dlbl=D("Text",{Text=c.Name or "",Position=Vector2.new(getX()+2,getBaseY()+oy+2),Size=13,Color=T.Text,Outline=true,OutlineColor=T.Black,ZIndex=5,Font=Drawing.Fonts.UI,Visible=false})
+                local dbg =D("Square",{Position=Vector2.new(getX()+2,getBaseY()+oy+18),Size=Vector2.new(LPW-4,18),Color=T.Input,Filled=true,Transparency=1,ZIndex=5,Visible=false})
+                local dtxt=D("Text",{Text=sel,Position=Vector2.new(getX()+6,getBaseY()+oy+21),Size=12,Color=T.Text,Outline=true,OutlineColor=T.Black,ZIndex=6,Font=Drawing.Fonts.UI,Visible=false})
+                local darr=D("Text",{Text="v",Position=Vector2.new(getX()+LPW-8,getBaseY()+oy+21),Size=11,Color=T.Pink,Outline=true,OutlineColor=T.Black,ZIndex=6,Font=Drawing.Fonts.UI,Visible=false})
+                regEl({dlbl,dbg,dtxt,darr},2,oy+16,LPW-4,22,function()
                     if #opts==0 then return end
                     oidx=oidx%#opts+1; sel=opts[oidx]; dtxt.Text=sel
                     if c.Callback then pcall(c.Callback,sel) end
                 end)
-                if isR then rightY=rightY+42 else leftY=leftY+42 end
+                if isR then rightOffY=rightOffY+42 else leftOffY=leftOffY+42 end
+            end
+
+            -- AddLabel
+            function Sec:AddLabel(c)
+                c=c or {}
+                local oy=isR and rightOffY or leftOffY
+                local lbl=D("Text",{Text=c.Text or "",Position=Vector2.new(getX()+2,getBaseY()+oy+2),Size=12,Color=c.Color or T.TextDim,Outline=true,OutlineColor=T.Black,ZIndex=5,Font=Drawing.Fonts.UI,Visible=false})
+                table.insert(els,lbl); table.insert(allDs,lbl)
+                if isR then rightOffY=rightOffY+18 else leftOffY=leftOffY+18 end
+            end
+
+            -- AddButton
+            function Sec:AddButton(c)
+                c=c or {}
+                local oy=isR and rightOffY or leftOffY
+                local bbg =D("Square",{Position=Vector2.new(getX()+2,getBaseY()+oy),Size=Vector2.new(LPW-4,20),Color=T.Input,Filled=true,Transparency=1,ZIndex=5,Visible=false})
+                local btxt=D("Text",{Text=c.Name or "Button",Position=Vector2.new(getX()+LPW/2,getBaseY()+oy+4),Size=13,Color=T.Text,Center=true,Outline=true,OutlineColor=T.Black,ZIndex=6,Font=Drawing.Fonts.UI,Visible=false})
+                regEl({bbg,btxt},2,oy,LPW-4,20,function()
+                    if c.Callback then pcall(c.Callback) end
+                end)
+                if isR then rightOffY=rightOffY+26 else leftOffY=leftOffY+26 end
             end
 
             return Sec
         end
 
-        table.insert(tabs,Tab)
-        if #tabs==1 then activate() end
         return Tab
+    end
+
+    -- MUST call after all tabs/sections/elements are added
+    -- Shows first tab's elements
+    function W:Finalize()
+        if #tabs > 0 then
+            local first = tabs[1]
+            for _,d in ipairs(first._els) do
+                pcall(function() d.Visible = true end)
+            end
+            activeTab = first
+            first._tabBG.Color   = T.ActiveBG
+            first._tabAcc.Visible= true
+            first._tabTxt.Color  = T.Pink
+        end
     end
 
     function W:Destroy()
         for _,d in ipairs(allD) do pcall(function() d:Remove() end) end
+        for _,s in ipairs(starPool) do s.s1:Remove(); s.s2:Remove() end
     end
 
     return W
