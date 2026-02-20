@@ -1,5 +1,5 @@
 --// ============================================================
---// NO.FEAR UI LIBRARY v1.0 (Chiyo-style)
+--// NO.FEAR UI LIBRARY v1.0
 --// ============================================================
 -- Usage:
 --   local UI = loadstring(game:HttpGet("...NoFear_UILib.lua"))()
