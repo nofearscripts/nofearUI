@@ -176,13 +176,17 @@ function UILib:CreateWindow(cfg)
     local TopBar = frame(Main, { Color = T.TopBar, Size = UDim2.new(1,0,0,32), ZIndex = 6 })
     makeDraggable(TopBar, Main)
 
-    -- Logo circle (pink, 20px)
-    local LogoCircle = frame(TopBar, { Color = T.Pink, Size = UDim2.new(0,20,0,20), Pos = UDim2.new(0,8,0.5,-10), ZIndex = 7 })
-    makecorner(LogoCircle, 10)
-    label(LogoCircle, { Text = "N", Color = Color3.fromRGB(255,255,255), Size = 12, Font = T.FontBlack, FrameSize = UDim2.new(1,0,1,0), ZIndex = 8, XAlign = Enum.TextXAlignment.Center })
+    -- NoFear Logo (ImageLabel)
+    local LogoImg = Instance.new("ImageLabel", TopBar)
+    LogoImg.Size = UDim2.new(0,24,0,24)
+    LogoImg.Position = UDim2.new(0,6,0.5,-12)
+    LogoImg.BackgroundTransparency = 1
+    LogoImg.Image = cfg.LogoId or "rbxassetid://6031763526" -- fallback to Roblox default, replace with your asset ID
+    LogoImg.ScaleType = Enum.ScaleType.Fit
+    LogoImg.ZIndex = 7
 
     -- Title
-    label(TopBar, { Text = cfg.Title or "NoFear", Color = T.Text, Size = 13, Font = T.FontBold, FrameSize = UDim2.new(0,200,1,0), Pos = UDim2.new(0,34,0,0), ZIndex = 7 })
+    label(TopBar, { Text = cfg.Title or "NoFear", Color = T.Text, Size = 13, Font = T.FontBold, FrameSize = UDim2.new(0,200,1,0), Pos = UDim2.new(0,36,0,0), ZIndex = 7 })
 
     -- Close button (+)
     local CloseBtn = btn(TopBar, { Text = "+", TextColor = T.TextDim, TextSize = 18, Size = UDim2.new(0,32,1,0), Pos = UDim2.new(1,-32,0,0), Color = T.TopBar, ZIndex = 7 })
@@ -209,21 +213,25 @@ function UILib:CreateWindow(cfg)
     -- Top divider
     local TopDiv = frame(Main, { Color = T.Divider, Size = UDim2.new(1,0,0,1), Pos = UDim2.new(0,0,0,32), ZIndex = 5 })
 
-    -- Icon sidebar (40px)
-    local Sidebar = frame(Main, { Color = T.Sidebar, Size = UDim2.new(0,40,1,-32-26), Pos = UDim2.new(0,0,0,33), ZIndex = 5 })
+    -- Icon sidebar (150px) with tab names
+    local Sidebar = frame(Main, { Color = T.Sidebar, Size = UDim2.new(0,150,1,-32-26), Pos = UDim2.new(0,0,0,33), ZIndex = 5 })
     local SidebarLayout = Instance.new("UIListLayout", Sidebar)
     SidebarLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    SidebarLayout.Padding = UDim.new(0,0)
+    SidebarLayout.Padding = UDim.new(0,2)
+    local SidebarPad = Instance.new("UIPadding", Sidebar)
+    SidebarPad.PaddingTop = UDim.new(0,6)
+    SidebarPad.PaddingLeft = UDim.new(0,6)
+    SidebarPad.PaddingRight = UDim.new(0,6)
 
     -- Sidebar divider
-    local SideDiv = frame(Main, { Color = T.Divider, Size = UDim2.new(0,1,1,-32-26), Pos = UDim2.new(0,40,0,33), ZIndex = 5 })
+    local SideDiv = frame(Main, { Color = T.Divider, Size = UDim2.new(0,1,1,-32-26), Pos = UDim2.new(0,150,0,33), ZIndex = 5 })
 
-    -- Left panel (tab content, 310px)
-    local LeftPanel = frame(Main, { Color = T.BG2, Size = UDim2.new(0,310,1,-32-26), Pos = UDim2.new(0,41,0,33), ZIndex = 4 })
-    local LeftDiv = frame(Main, { Color = T.Divider, Size = UDim2.new(0,1,1,-32-26), Pos = UDim2.new(0,351,0,33), ZIndex = 5 })
+    -- Left panel (tab content, 270px)
+    local LeftPanel = frame(Main, { Color = T.BG2, Size = UDim2.new(0,270,1,-32-26), Pos = UDim2.new(0,151,0,33), ZIndex = 4 })
+    local LeftDiv = frame(Main, { Color = T.Divider, Size = UDim2.new(0,1,1,-32-26), Pos = UDim2.new(0,421,0,33), ZIndex = 5 })
 
     -- Right panel (remaining width)
-    local RightPanel = frame(Main, { Color = T.BG2, Size = UDim2.new(1,-352,1,-32-26), Pos = UDim2.new(0,352,0,33), ZIndex = 4 })
+    local RightPanel = frame(Main, { Color = T.BG2, Size = UDim2.new(1,-422,1,-32-26), Pos = UDim2.new(0,422,0,33), ZIndex = 4 })
 
     -- Bottom bar (26px)
     local BottomDiv = frame(Main, { Color = T.Divider, Size = UDim2.new(1,0,0,1), Pos = UDim2.new(0,0,1,-27), ZIndex = 5 })
@@ -236,16 +244,27 @@ function UILib:CreateWindow(cfg)
         local Tab = {}
         local leftScroll, rightScroll
 
-        -- Sidebar icon button
-        local iconBtn = btn(Sidebar, {
-            Text = tabCfg.Icon or "•",
-            TextColor = T.TextDim,
-            TextSize = 16,
-            Size = UDim2.new(1,0,0,40),
-            Color = T.Sidebar,
-            ZIndex = 6,
-        })
+        -- Sidebar tab button (pill shape with icon + name)
+        local iconBtn = Instance.new("TextButton", Sidebar)
+        iconBtn.Size = UDim2.new(1,0,0,34)
+        iconBtn.BackgroundColor3 = T.Sidebar
+        iconBtn.BorderSizePixel = 0
+        iconBtn.Text = (tabCfg.Icon or "•") .. "  " .. (tabCfg.Name or "Tab")
+        iconBtn.TextColor3 = T.TextDim
+        iconBtn.TextSize = 13
+        iconBtn.Font = T.Font
+        iconBtn.TextXAlignment = Enum.TextXAlignment.Left
+        iconBtn.AutoButtonColor = false
+        iconBtn.ZIndex = 6
         iconBtn.LayoutOrder = #tabs + 1
+        local iconPad = Instance.new("UIPadding", iconBtn)
+        iconPad.PaddingLeft = UDim.new(0,10)
+        makecorner(iconBtn, 6)
+
+        -- Active left accent bar
+        local accentBar = frame(iconBtn, { Color = T.Pink, Size = UDim2.new(0,3,0,18), Pos = UDim2.new(0,0,0.5,-9), ZIndex = 7 })
+        makecorner(accentBar, 2)
+        accentBar.Visible = false
 
         -- Left scroll frame
         leftScroll = Instance.new("ScrollingFrame", LeftPanel)
@@ -292,11 +311,13 @@ function UILib:CreateWindow(cfg)
                 t.rightScroll.Visible = false
                 t.iconBtn.TextColor3 = T.TextDim
                 t.iconBtn.BackgroundColor3 = T.Sidebar
+                if t.accentBar then t.accentBar.Visible = false end
             end
             leftScroll.Visible = true
             rightScroll.Visible = true
             iconBtn.TextColor3 = T.Pink
-            iconBtn.BackgroundColor3 = Color3.fromRGB(32,32,32)
+            iconBtn.BackgroundColor3 = Color3.fromRGB(34,28,34)
+            accentBar.Visible = true
             activeTab = Tab
         end
 
@@ -304,6 +325,7 @@ function UILib:CreateWindow(cfg)
         Tab.leftScroll = leftScroll
         Tab.rightScroll = rightScroll
         Tab.iconBtn = iconBtn
+        Tab.accentBar = accentBar
 
         iconBtn.MouseButton1Click:Connect(activate)
 
