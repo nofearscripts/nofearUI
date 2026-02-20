@@ -1,5 +1,5 @@
 --// ============================================================
---// NO.FEAR UI LIBRARY v1.0
+--// NO.FEAR UI LIBRARY v1.0 (Chiyo-style)
 --// ============================================================
 -- Usage:
 --   local UI = loadstring(game:HttpGet("...NoFear_UILib.lua"))()
@@ -175,9 +175,9 @@ function UILib:CreateWindow(cfg)
     Glow.Size = UDim2.new(1,80,1,80)
     Glow.Position = UDim2.new(0,-40,0,-40)
     Glow.BackgroundTransparency = 1
-    Glow.Image = "rbxassetid://5028857084"
+    Glow.Image = "rbxassetid://1316045217" -- square soft glow, no vertical streaks
     Glow.ImageColor3 = Color3.fromRGB(255,255,255)
-    Glow.ImageTransparency = 0.45
+    Glow.ImageTransparency = 0.7
     Glow.ZIndex = 0
     Glow.ScaleType = Enum.ScaleType.Stretch
 
