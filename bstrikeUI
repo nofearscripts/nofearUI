@@ -1,4 +1,4 @@
--- NO.FEAR Drawing UI Library v6.0 (RenderStepped architecture
+-- NO.FEAR Drawing UI Library v6.0 (RenderStepped architecture)
 -- All positions recalculated every frame from WX/WY
 -- Zero closures for positions, zero allD complexity
 
@@ -92,8 +92,9 @@ function DrawLib:CreateWindow(cfg)
     local EPY = 8    -- element padding Y
     local EPX = 10   -- element padding X
 
-    -- Add tab
-    function S:AddTab(name)
+    -- Add tab (accepts string or {Name=..., Icon=...} table)
+    function S:AddTab(cfg)
+        local name = type(cfg)=="table" and (cfg.Name or cfg.name or "Tab") or tostring(cfg)
         local idx = #S.tabs+1
         table.insert(S.tabs, {name=name, secs={}, lRows=0, rRows=0})
         local td = {
