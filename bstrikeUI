@@ -1,9 +1,10 @@
--- NoFear Drawing UI Library v8.0
--- Single InputBegan, offset-based positions
+-- NoFear Drawing UI Library v9.0
+-- Clean rewrite: offsets from WX/WY, single input handler, no duplicate allD inserts
 
 local DrawLib = {}
 local UIS = game:GetService("UserInputService")
 local RS  = game:GetService("RunService")
+local mouse = game:GetService("Players").LocalPlayer:GetMouse()
 
 local T = {
     BG    = Color3.fromRGB(22,22,22),
@@ -17,53 +18,52 @@ local T = {
 }
 
 local function nd(t,p)
-    local d=Drawing.new(t)
-    for k,v in pairs(p) do d[k]=v end
+    local d = Drawing.new(t)
+    for k,v in pairs(p) do pcall(function() d[k]=v end) end
     return d
 end
 
 function DrawLib:CreateWindow(cfg)
     cfg = cfg or {}
-    local title      = cfg.Title or "NoFear"
-    local gameName   = cfg.Game or ""
-    local toggleKey  = cfg.ToggleKey or Enum.KeyCode.K
-    local WX,WY      = 200,150
-    local WW,WH      = 700,500
-    local SBW        = 130
-    local TBH        = 32
-    local BBH        = 22
-    local PAD        = 8
-    local CW         = math.floor((WW-SBW-2)/2)
-    local visible    = true
-    local dragging   = false
-    local dox,doy    = 0,0
-    local activeTab  = 1
-    local tabs       = {}
-    local allD       = {}
-    local handlers   = {}
-    local mouse      = game:GetService("Players").LocalPlayer:GetMouse()
+    local title     = tostring(cfg.Title or "NoFear")
+    local gameName  = tostring(cfg.Game or "")
+    local toggleKey = cfg.ToggleKey or Enum.KeyCode.K
+    local WX,WY     = 200,150
+    local WW,WH     = 700,500
+    local SBW       = 130
+    local TBH       = 32
+    local BBH       = 22
+    local PAD       = 8
+    local CW        = math.floor((WW-SBW-2)/2)
+    local visible   = true
+    local dragging  = false
+    local dox,doy   = 0,0
+    local activeTab = 1
+    local tabs      = {}
+    local allD      = {}   -- all drawings for show/hide
+    local handlers  = {}   -- {ox,oy,w,h,fn,tabIdx} offsets from WX/WY
 
     local function D(t,p)
-        local d=nd(t,p)
+        local d = nd(t,p)
         table.insert(allD,d)
         return d
     end
 
-    -- Chrome
-    local bg    = D("Square",{Filled=true,Color=T.BG,Transparency=1,ZIndex=1})
-    local tbar  = D("Square",{Filled=true,Color=T.SB,Transparency=1,ZIndex=2})
-    local ttxt  = D("Text",{Text=title,Color=T.Pink,Size=14,Font=Drawing.Fonts.GothamBold,Outline=false,ZIndex=3})
-    local gtxt  = D("Text",{Text=gameName,Color=T.Dim,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=3})
-    local sbar  = D("Square",{Filled=true,Color=T.SB,Transparency=1,ZIndex=2})
-    local sbln  = D("Line",{Color=T.SEP,Thickness=1,Transparency=1,ZIndex=3})
-    local cdiv  = D("Line",{Color=T.SEP,Thickness=1,Transparency=1,ZIndex=3})
-    local tbln  = D("Line",{Color=T.SEP,Thickness=1,Transparency=1,ZIndex=3})
-    local bbar  = D("Square",{Filled=true,Color=T.SB,Transparency=1,ZIndex=2})
-    local bbln  = D("Line",{Color=T.SEP,Thickness=1,Transparency=1,ZIndex=3})
-    local bbtxt = D("Text",{Text="discord.gg/G9QSXsB9wY",Color=T.Dim,Size=11,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=3})
-    local bord  = D("Square",{Filled=false,Color=Color3.fromRGB(60,60,60),Thickness=1,Transparency=1,ZIndex=2})
+    -- Chrome drawings
+    local bg    = D("Square",{Filled=true,Color=T.BG,   Transparency=1,ZIndex=1,Size=Vector2.new(WW,WH),        Position=Vector2.new(WX,WY)})
+    local tbar  = D("Square",{Filled=true,Color=T.SB,   Transparency=1,ZIndex=2,Size=Vector2.new(WW,TBH),       Position=Vector2.new(WX,WY)})
+    local ttxt  = D("Text",  {Text=title, Color=T.Pink, Transparency=1,ZIndex=3,Size=14,Font=Drawing.Fonts.GothamBold,Outline=false,Position=Vector2.new(WX+10,WY+8)})
+    local gtxt  = D("Text",  {Text=gameName,Color=T.Dim,Transparency=1,ZIndex=3,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,Position=Vector2.new(WX+WW-100,WY+10)})
+    local sbar  = D("Square",{Filled=true,Color=T.SB,   Transparency=1,ZIndex=2,Size=Vector2.new(SBW,WH-TBH-BBH),Position=Vector2.new(WX,WY+TBH)})
+    local sbln  = D("Line",  {Color=T.SEP,Thickness=1,  Transparency=1,ZIndex=3,From=Vector2.new(WX+SBW,WY+TBH),To=Vector2.new(WX+SBW,WY+WH-BBH)})
+    local cdiv  = D("Line",  {Color=T.SEP,Thickness=1,  Transparency=1,ZIndex=3,From=Vector2.new(WX+SBW+CW+1,WY+TBH),To=Vector2.new(WX+SBW+CW+1,WY+WH-BBH)})
+    local tbln  = D("Line",  {Color=T.SEP,Thickness=1,  Transparency=1,ZIndex=3,From=Vector2.new(WX,WY+TBH),To=Vector2.new(WX+WW,WY+TBH)})
+    local bbar  = D("Square",{Filled=true,Color=T.SB,   Transparency=1,ZIndex=2,Size=Vector2.new(WW,BBH),        Position=Vector2.new(WX,WY+WH-BBH)})
+    local bbln  = D("Line",  {Color=T.SEP,Thickness=1,  Transparency=1,ZIndex=3,From=Vector2.new(WX,WY+WH-BBH),To=Vector2.new(WX+WW,WY+WH-BBH)})
+    local bbtxt = D("Text",  {Text="discord.gg/G9QSXsB9wY",Color=T.Dim,Transparency=1,ZIndex=3,Size=11,Font=Drawing.Fonts.Gotham,Outline=false,Position=Vector2.new(WX+WW/2-80,WY+WH-BBH+5)})
+    local bord  = D("Square",{Filled=false,Color=Color3.fromRGB(60,60,60),Thickness=1,Transparency=1,ZIndex=2,Size=Vector2.new(WW,WH),Position=Vector2.new(WX,WY)})
 
-    local function redraw()
+    local function reposition()
         bg.Size=Vector2.new(WW,WH);           bg.Position=Vector2.new(WX,WY)
         tbar.Size=Vector2.new(WW,TBH);        tbar.Position=Vector2.new(WX,WY)
         ttxt.Position=Vector2.new(WX+10,WY+8)
@@ -76,40 +76,58 @@ function DrawLib:CreateWindow(cfg)
         bbln.From=Vector2.new(WX,WY+WH-BBH);   bbln.To=Vector2.new(WX+WW,WY+WH-BBH)
         bbtxt.Position=Vector2.new(WX+WW/2-80,WY+WH-BBH+5)
         bord.Size=Vector2.new(WW,WH);          bord.Position=Vector2.new(WX,WY)
-        -- Reposition tabs
         for i,tab in ipairs(tabs) do
             local ty=WY+TBH+(i-1)*34
-            tab.bg.Position=Vector2.new(WX,ty);tab.bg.Size=Vector2.new(SBW,34)
-            tab.acc.Position=Vector2.new(WX,ty+7);tab.acc.Size=Vector2.new(3,20)
+            tab.bg.Size=Vector2.new(SBW,34);tab.bg.Position=Vector2.new(WX,ty)
+            tab.acc.Size=Vector2.new(3,20);tab.acc.Position=Vector2.new(WX,ty+7)
             tab.txt.Position=Vector2.new(WX+14,ty+10)
-            -- Reposition elements using offsets
-            for _,el in ipairs(tab.els) do
-                el.d.Position=Vector2.new(WX+el.ox,WY+el.oy)
-                if el.d2 then el.d2.Position=Vector2.new(WX+el.ox2,WY+el.oy2) end
-                if el.d3 then el.d3.Position=Vector2.new(WX+el.ox3,WY+el.oy3) end
-                if el.d4 then el.d4.Position=Vector2.new(WX+el.ox4,WY+el.oy4) end
+            if tab.sep then tab.sep.From=Vector2.new(WX,ty);tab.sep.To=Vector2.new(WX+SBW,ty) end
+            for _,e in ipairs(tab.els) do
+                if e.isLine then
+                    e.d.From=Vector2.new(WX+e.ox,WY+e.oy);e.d.To=Vector2.new(WX+e.ox+e.lw,WY+e.oy)
+                else
+                    e.d.Position=Vector2.new(WX+e.ox,WY+e.oy)
+                end
+                if e.d2 then
+                    if e.d2isLine then
+                        e.d2.From=Vector2.new(WX+e.ox2,WY+e.oy2);e.d2.To=Vector2.new(WX+e.ox2+e.lw2,WY+e.oy2)
+                    else e.d2.Position=Vector2.new(WX+e.ox2,WY+e.oy2) end
+                end
+                if e.d3 then e.d3.Position=Vector2.new(WX+e.ox3,WY+e.oy3) end
+                if e.d4 then e.d4.Position=Vector2.new(WX+e.ox4,WY+e.oy4) end
             end
-            -- Reposition handlers
-            for _,h in ipairs(tab.hs) do
-                h.ax=WX+h.ox; h.ay=WY+h.oy
-            end
-            -- Tab click handler
-            tab.hx=WX; tab.hy=WY+TBH+(i-1)*34
         end
     end
 
-    local function setVis(v)
+    local function setVisible(v)
         visible=v
-        for _,d in ipairs(allD) do pcall(function()d.Visible=v end) end
+        for _,d in ipairs(allD) do pcall(function() d.Visible=v end) end
         if v then
             for i,tab in ipairs(tabs) do
                 local act=(i==activeTab)
-                for _,el in ipairs(tab.els) do
-                    for _,d in ipairs(el.all) do pcall(function()d.Visible=act end) end
+                for _,e in ipairs(tab.els) do
+                    pcall(function() e.d.Visible=act end)
+                    if e.d2 then pcall(function() e.d2.Visible=act end) end
+                    if e.d3 then pcall(function() e.d3.Visible=act end) end
+                    if e.d4 then pcall(function() e.d4.Visible=act end) end
                 end
-                tab.bg.Color=act and T.Act or T.SB
                 tab.acc.Visible=act
-                tab.txt.Color=act and T.Pink or T.Dim
+            end
+        end
+    end
+
+    local function activateTab(i)
+        activeTab=i
+        for j,tab in ipairs(tabs) do
+            local act=(j==i)
+            tab.bg.Color=act and T.Act or T.SB
+            tab.acc.Visible=act
+            tab.txt.Color=act and T.Pink or T.Dim
+            for _,e in ipairs(tab.els) do
+                pcall(function() e.d.Visible=act end)
+                if e.d2 then pcall(function() e.d2.Visible=act end) end
+                if e.d3 then pcall(function() e.d3.Visible=act end) end
+                if e.d4 then pcall(function() e.d4.Visible=act end) end
             end
         end
     end
@@ -118,7 +136,7 @@ function DrawLib:CreateWindow(cfg)
     task.spawn(function()
         while true do
             task.wait(math.random(3,8)/10)
-            if not visible then continue end
+            if not visible then task.wait(1); continue end
             local sx=math.random(WX+SBW+5,WX+WW-15)
             local spd=math.random(50,120)
             local sz=math.random(2,4)
@@ -126,68 +144,77 @@ function DrawLib:CreateWindow(cfg)
             local s2=Drawing.new("Square");s2.Filled=true;s2.Color=Color3.new(1,1,1);s2.Transparency=0.7;s2.Size=Vector2.new(1,sz);s2.ZIndex=20;s2.Visible=true
             task.spawn(function()
                 local t2=0;local dur=(WH-TBH-BBH)/spd
-                while t2<dur and visible do
+                while t2<dur do
                     local dt=task.wait();t2+=dt
-                    local ny=WY+TBH+5+(t2/dur)*(WH-TBH-BBH-10)
-                    s1.Position=Vector2.new(sx,ny);s2.Position=Vector2.new(sx,ny)
+                    if not visible then s1.Visible=false;s2.Visible=false else
+                        local ny=WY+TBH+5+(t2/dur)*(WH-TBH-BBH-10)
+                        s1.Position=Vector2.new(sx,ny);s1.Visible=true
+                        s2.Position=Vector2.new(sx,ny);s2.Visible=true
+                    end
                 end
                 pcall(function()s1:Remove()end);pcall(function()s2:Remove()end)
             end)
         end
     end)
 
-    -- Single InputBegan
+    -- Drag
+    RS:BindToRenderStep("NFUIv9Drag",1,function()
+        if dragging then
+            WX=mouse.X-dox;WY=mouse.Y-doy
+            reposition()
+        end
+    end)
+
+    -- Single input handler
     UIS.InputBegan:Connect(function(inp,gpe)
         if gpe then return end
-        -- Toggle key
-        if inp.KeyCode==toggleKey then setVis(not visible);return end
+        if inp.KeyCode==toggleKey then setVisible(not visible);return end
         if inp.UserInputType~=Enum.UserInputType.MouseButton1 then return end
         local mx,my=mouse.X,mouse.Y
-        -- Drag check
-        if mx>=WX and mx<=WX+WW and my>=WY and my<=WY+TBH then
+        -- Drag
+        if my>=WY and my<=WY+TBH and mx>=WX and mx<=WX+WW then
             dragging=true;dox=mx-WX;doy=my-WY;return
         end
         if not visible then return end
-        -- Tab click check
+        -- Tab click (use live WX/WY)
         for i,tab in ipairs(tabs) do
-            if mx>=tab.hx and mx<=tab.hx+SBW and my>=tab.hy and my<=tab.hy+34 then
-                -- Activate tab
-                activeTab=i
-                for j,t2 in ipairs(tabs) do
-                    local act=(j==i)
-                    t2.bg.Color=act and T.Act or T.SB
-                    t2.acc.Visible=act
-                    t2.txt.Color=act and T.Pink or T.Dim
-                    for _,el in ipairs(t2.els) do
-                        for _,d in ipairs(el.all) do pcall(function()d.Visible=act end) end
-                    end
-                end
-                return
+            local tx=WX;local ty=WY+TBH+(i-1)*34
+            if mx>=tx and mx<=tx+SBW and my>=ty and my<=ty+34 then
+                activateTab(i);return
             end
         end
-        -- Element click check
+        -- Element handlers (use live WX/WY + stored offsets)
         for _,h in ipairs(handlers) do
-            if h._tabIdx==activeTab then
-                if mx>=h.ax and mx<=h.ax+h.w and my>=h.ay and my<=h.ay+h.h then
-                    pcall(h.fn)
-                    return
+            if h.tabIdx==activeTab then
+                local ax=WX+h.ox;local ay=WY+h.oy
+                if mx>=ax and mx<=ax+h.w and my>=ay and my<=ay+h.h then
+                    pcall(h.fn);return
                 end
             end
         end
     end)
 
     UIS.InputEnded:Connect(function(inp)
-        if inp.UserInputType==Enum.UserInputType.MouseButton1 then dragging=false end
-    end)
-
-    RS:BindToRenderStep("NFDrag",1,function()
-        if dragging then
-            WX=mouse.X-dox;WY=mouse.Y-doy
-            redraw()
+        if inp.UserInputType==Enum.UserInputType.MouseButton1 then
+            dragging=false
+            -- Stop all sliders
+            for _,h in ipairs(handlers) do
+                if h.isSlider then h.sliding=false end
+            end
         end
     end)
 
-    redraw()
+    RS:BindToRenderStep("NFUIv9Slider",2,function()
+        for _,h in ipairs(handlers) do
+            if h.isSlider and h.sliding then
+                local pct=math.clamp((mouse.X-(WX+h.ox))/h.slW,0,1)
+                local val=math.floor(h.mn+pct*(h.mx-h.mn))
+                h.fill.Size=Vector2.new(math.max(1,math.floor(pct*h.slW)),4)
+                h.vtxt.Text=h.name..": "..tostring(val)
+                pcall(h.fn,val)
+            end
+        end
+    end)
 
     local W={}
     function W:Finalize() end
@@ -198,78 +225,55 @@ function DrawLib:CreateWindow(cfg)
         local idx=#tabs+1
         local ty=WY+TBH+(idx-1)*34
 
-        local tab={
-            name=tname,els={},hs={},
-            hx=WX,hy=ty,
-        }
-        -- Sidebar drawings
+        local tab={name=tname,els={}}
         tab.bg  = D("Square",{Filled=true,Color=T.SB,Transparency=1,ZIndex=4,Size=Vector2.new(SBW,34),Position=Vector2.new(WX,ty)})
         tab.acc = D("Square",{Filled=true,Color=T.Pink,Transparency=1,ZIndex=5,Size=Vector2.new(3,20),Position=Vector2.new(WX,ty+7),Visible=false})
         tab.txt = D("Text",{Text=tname,Color=T.Dim,Size=13,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=5,Position=Vector2.new(WX+14,ty+10)})
+        tab.sep = nil
         if idx>1 then
-            D("Line",{Color=T.SEP,Thickness=1,Transparency=1,ZIndex=4,From=Vector2.new(WX,ty),To=Vector2.new(WX+SBW,ty)})
+            tab.sep=D("Line",{Color=T.SEP,Thickness=1,Transparency=1,ZIndex=4,From=Vector2.new(WX,ty),To=Vector2.new(WX+SBW,ty)})
         end
-
         table.insert(tabs,tab)
+        if idx==1 then activateTab(1) end
 
-        -- Activate first tab
-        if idx==1 then
-            tab.bg.Color=T.Act;tab.acc.Visible=true;tab.txt.Color=T.Pink
-            activeTab=1
-        end
-
-        -- Column positions (offsets from WX,WY)
-        local LXo = SBW+PAD           -- left col X offset
-        local RXo = SBW+CW+PAD+1      -- right col X offset
+        local LXo = SBW+PAD
+        local RXo = SBW+CW+PAD+1
         local colW = CW-PAD*2
-        local lYo = TBH+PAD           -- left Y offset from WY
-        local rYo = TBH+PAD           -- right Y offset from WY
+        local lYo = TBH+PAD
+        local rYo = TBH+PAD
 
-        local function el(isR,d,ox,oy,d2,ox2,oy2,d3,ox3,oy3,d4,ox4,oy4)
-            local allDs={d}
-            if d2 then table.insert(allDs,d2) end
-            if d3 then table.insert(allDs,d3) end
-            if d4 then table.insert(allDs,d4) end
-            local e={d=d,ox=ox,oy=oy,d2=d2,ox2=ox2,oy2=oy2,d3=d3,ox3=ox3,oy3=oy3,d4=d4,ox4=ox4,oy4=oy4,all=allDs}
+        local function addEl(d,ox,oy,d2,ox2,oy2,d3,ox3,oy3,d4,ox4,oy4,isLine,lw,d2isLine,lw2)
+            local e={d=d,ox=ox,oy=oy,d2=d2,ox2=ox2,oy2=oy2,d3=d3,ox3=ox3,oy3=oy3,d4=d4,ox4=ox4,oy4=oy4,isLine=isLine,lw=lw,d2isLine=d2isLine,lw2=lw2}
             table.insert(tab.els,e)
             table.insert(allD,d)
             if d2 then table.insert(allD,d2) end
             if d3 then table.insert(allD,d3) end
             if d4 then table.insert(allD,d4) end
-            -- Hide if not active tab
             local act=(idx==activeTab)
-            for _,dr in ipairs(allDs) do pcall(function()dr.Visible=act end) end
-            return e
+            pcall(function()d.Visible=act end)
+            if d2 then pcall(function()d2.Visible=act end) end
+            if d3 then pcall(function()d3.Visible=act end) end
+            if d4 then pcall(function()d4.Visible=act end) end
         end
 
-        local function addH(isR,ox,oy,w,h,fn)
-            local ax=WX+ox;local ay=WY+oy
-            local hh={ox=ox,oy=oy,ax=ax,ay=ay,w=w,h=h,fn=fn,_tabIdx=idx}
-            table.insert(handlers,hh)
-            table.insert(tab.hs,hh)
+        local function addH(ox,oy,w,h,fn)
+            table.insert(handlers,{ox=ox,oy=oy,w=w,h=h,fn=fn,tabIdx=idx})
         end
 
         local Tab={}
 
         function Tab:AddSection(sn,side)
             sn=tostring(sn or "")
-            local isR=(side=="right")
+            local isR=(side=="right" or side==true)
             local xo=isR and RXo or LXo
             local yo=isR and rYo or lYo
 
-            -- Section header
-            local hbg=nd("Square",{Filled=true,Color=T.BG2,Transparency=1,ZIndex=4,Size=Vector2.new(colW,20),Position=Vector2.new(WX+xo,WY+yo)})
-            local hacc=nd("Square",{Filled=true,Color=T.Pink,Transparency=1,ZIndex=5,Size=Vector2.new(3,14),Position=Vector2.new(WX+xo,WY+yo+3)})
-            local htxt=nd("Text",{Text=sn,Color=T.White,Size=13,Font=Drawing.Fonts.GothamBold,Outline=false,ZIndex=5,Position=Vector2.new(WX+xo+8,WY+yo+3)})
-            local hsep=nd("Line",{Color=T.SEP,Thickness=1,Transparency=1,ZIndex=4,From=Vector2.new(WX+xo,WY+yo+20),To=Vector2.new(WX+xo+colW,WY+yo+20)})
-
-            el(isR,hbg,xo,yo,hacc,xo,yo+3,htxt,xo+8,yo+3,hsep)
-            -- hsep special - Line not Square, handle separately
-            table.insert(tab.els,{d=hsep,ox=xo,oy=yo+20,all={hsep}})
-            table.insert(allD,hbg);table.insert(allD,hacc);table.insert(allD,htxt);table.insert(allD,hsep)
-            local act=(idx==activeTab)
-            hbg.Visible=act;hacc.Visible=act;htxt.Visible=act;hsep.Visible=act
-
+            local hbg  = nd("Square",{Filled=true,Color=T.BG2,Transparency=1,ZIndex=4,Size=Vector2.new(colW,20),Position=Vector2.new(WX+xo,WY+yo)})
+            local hacc = nd("Square",{Filled=true,Color=T.Pink,Transparency=1,ZIndex=5,Size=Vector2.new(3,14),Position=Vector2.new(WX+xo,WY+yo+3)})
+            local htxt = nd("Text",{Text=sn,Color=T.White,Size=13,Font=Drawing.Fonts.GothamBold,Outline=false,ZIndex=5,Position=Vector2.new(WX+xo+8,WY+yo+3)})
+            local hsep = nd("Line",{Color=T.SEP,Thickness=1,Transparency=1,ZIndex=4,From=Vector2.new(WX+xo,WY+yo+20),To=Vector2.new(WX+xo+colW,WY+yo+20)})
+            addEl(hbg,xo,yo,hacc,xo,yo+3,htxt,xo+8,yo+3)
+            addEl(hsep,xo,yo+20,nil,nil,nil,nil,nil,nil,nil,nil,nil,true,colW)
             if isR then rYo=yo+24 else lYo=yo+24 end
 
             local Sec={}
@@ -280,28 +284,27 @@ function DrawLib:CreateWindow(cfg)
                 local state=tc.Default==true
                 local cb=tc.Callback or function()end
                 local yo2=isR and rYo or lYo
+                local kox_off=state and colW-34+16 or colW-34+2
 
-                local rbg=nd("Square",{Filled=true,Color=T.BG,Transparency=1,ZIndex=4,Size=Vector2.new(colW,24),Position=Vector2.new(WX+xo,WY+yo2)})
-                local rtxt=nd("Text",{Text=tn,Color=T.Dim,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=5,Position=Vector2.new(WX+xo+6,WY+yo2+6)})
+                local rbg  =nd("Square",{Filled=true,Color=T.BG,Transparency=1,ZIndex=4,Size=Vector2.new(colW,24),Position=Vector2.new(WX+xo,WY+yo2)})
+                local rtxt =nd("Text",{Text=tn,Color=T.Dim,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=5,Position=Vector2.new(WX+xo+6,WY+yo2+6)})
                 local track=nd("Square",{Filled=true,Color=state and T.Pink or T.SEP,Transparency=1,ZIndex=5,Size=Vector2.new(28,14),Position=Vector2.new(WX+xo+colW-34,WY+yo2+5)})
-                local knobX=state and xo+colW-34+16 or xo+colW-34+2
-                local knob=nd("Square",{Filled=true,Color=T.White,Transparency=1,ZIndex=6,Size=Vector2.new(10,10),Position=Vector2.new(WX+knobX,WY+yo2+7)})
+                local knob =nd("Square",{Filled=true,Color=T.White,Transparency=1,ZIndex=6,Size=Vector2.new(10,10),Position=Vector2.new(WX+xo+kox_off,WY+yo2+7)})
 
-                el(isR,rbg,xo,yo2,rtxt,xo+6,yo2+6,track,xo+colW-34,yo2+5,knob)
+                -- Store knob el so redraw can update ox4
+                local elRef={}
+                addEl(rbg,xo,yo2,rtxt,xo+6,yo2+6,track,xo+colW-34,yo2+5,knob,xo+kox_off,yo2+7)
+                -- find the el we just added
+                elRef=tab.els[#tab.els]
 
-                -- Store knob offset for update
-                local function toggle()
+                addH(xo+colW-36,yo2+3,32,18,function()
                     state=not state
                     track.Color=state and T.Pink or T.SEP
                     local kx=state and xo+colW-34+16 or xo+colW-34+2
                     knob.Position=Vector2.new(WX+kx,WY+yo2+7)
-                    -- Update knob el offset
-                    for _,e2 in ipairs(tab.els) do
-                        if e2.d4==knob then e2.ox4=kx end
-                    end
+                    elRef.ox4=kx;elRef.oy4=yo2+7
                     pcall(cb,state)
-                end
-                addH(isR,xo+colW-36,yo2+3,32,18,toggle)
+                end)
                 if isR then rYo=yo2+26 else lYo=yo2+26 end
             end
 
@@ -314,29 +317,21 @@ function DrawLib:CreateWindow(cfg)
                 local cb=sc.Callback or function()end
                 local yo2=isR and rYo or lYo
                 local slW=colW-12
-                local sliding=false
 
-                local rbg=nd("Square",{Filled=true,Color=T.BG,Transparency=1,ZIndex=4,Size=Vector2.new(colW,34),Position=Vector2.new(WX+xo,WY+yo2)})
-                local stxt=nd("Text",{Text=sn2..": "..tostring(val),Color=T.Dim,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=5,Position=Vector2.new(WX+xo+6,WY+yo2+4)})
+                local rbg  =nd("Square",{Filled=true,Color=T.BG,Transparency=1,ZIndex=4,Size=Vector2.new(colW,34),Position=Vector2.new(WX+xo,WY+yo2)})
+                local stxt =nd("Text",{Text=sn2..": "..tostring(val),Color=T.Dim,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=5,Position=Vector2.new(WX+xo+6,WY+yo2+4)})
                 local strack=nd("Square",{Filled=true,Color=T.SEP,Transparency=1,ZIndex=5,Size=Vector2.new(slW,4),Position=Vector2.new(WX+xo+6,WY+yo2+22)})
                 local pct0=((val-mn)/(mx2-mn))
                 local sfill=nd("Square",{Filled=true,Color=T.Pink,Transparency=1,ZIndex=6,Size=Vector2.new(math.max(1,math.floor(pct0*slW)),4),Position=Vector2.new(WX+xo+6,WY+yo2+22)})
 
-                el(isR,rbg,xo,yo2,stxt,xo+6,yo2+4,strack,xo+6,yo2+22,sfill)
+                addEl(rbg,xo,yo2,stxt,xo+6,yo2+4,strack,xo+6,yo2+22,sfill,xo+6,yo2+22)
 
-                addH(isR,xo+6,yo2+18,slW,12,function() sliding=true end)
+                local h={ox=xo+6,oy=yo2+18,w=slW,h=12,tabIdx=idx,isSlider=true,sliding=false,mn=mn,mx=mx2,slW=slW,fill=sfill,vtxt=stxt,name=sn2,fn=cb}
+                table.insert(handlers,h)
+                addH(xo+6,yo2+18,slW,12,function() h.sliding=true end)
+                -- override last handler with slider ref
+                handlers[#handlers]=h
 
-                UIS.InputEnded:Connect(function(i2)
-                    if i2.UserInputType==Enum.UserInputType.MouseButton1 then sliding=false end
-                end)
-                RS:BindToRenderStep("sl_"..sn2..idx..yo2,2,function()
-                    if not sliding then return end
-                    local pct=math.clamp((mouse.X-(WX+xo+6))/slW,0,1)
-                    val=math.floor(mn+pct*(mx2-mn))
-                    sfill.Size=Vector2.new(math.max(1,math.floor(pct*slW)),4)
-                    stxt.Text=sn2..": "..tostring(val)
-                    pcall(cb,val)
-                end)
                 if isR then rYo=yo2+36 else lYo=yo2+36 end
             end
 
@@ -348,16 +343,15 @@ function DrawLib:CreateWindow(cfg)
                 local cb=dc.Callback or function()end
                 local yo2=isR and rYo or lYo
                 local ci=1
-                for i,o in ipairs(opts) do if tostring(o)==val then ci=i break end end
+                for i,o in ipairs(opts) do if tostring(o)==val then ci=i;break end end
 
-                local rbg=nd("Square",{Filled=true,Color=T.BG,Transparency=1,ZIndex=4,Size=Vector2.new(colW,34),Position=Vector2.new(WX+xo,WY+yo2)})
+                local rbg =nd("Square",{Filled=true,Color=T.BG,Transparency=1,ZIndex=4,Size=Vector2.new(colW,34),Position=Vector2.new(WX+xo,WY+yo2)})
                 local dtxt=nd("Text",{Text=dn,Color=T.Dim,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=5,Position=Vector2.new(WX+xo+6,WY+yo2+4)})
                 local dbox=nd("Square",{Filled=true,Color=T.SEP,Transparency=1,ZIndex=5,Size=Vector2.new(colW-12,16),Position=Vector2.new(WX+xo+6,WY+yo2+16)})
                 local dvtxt=nd("Text",{Text=val,Color=T.White,Size=11,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=6,Position=Vector2.new(WX+xo+9,WY+yo2+18)})
 
-                el(isR,rbg,xo,yo2,dtxt,xo+6,yo2+4,dbox,xo+6,yo2+16,dvtxt)
-
-                addH(isR,xo+6,yo2+16,colW-12,16,function()
+                addEl(rbg,xo,yo2,dtxt,xo+6,yo2+4,dbox,xo+6,yo2+16,dvtxt,xo+9,yo2+18)
+                addH(xo+6,yo2+16,colW-12,16,function()
                     ci=(ci%#opts)+1
                     val=tostring(opts[ci] or "")
                     dvtxt.Text=val
@@ -369,10 +363,10 @@ function DrawLib:CreateWindow(cfg)
             function Sec:AddLabel(lc)
                 lc=lc or {}
                 local lt=tostring(lc.Text or "")
-                local lc2=lc.Color or T.Dim
+                local lcolor=lc.Color or T.Dim
                 local yo2=isR and rYo or lYo
-                local ltxt=nd("Text",{Text=lt,Color=lc2,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=5,Position=Vector2.new(WX+xo+6,WY+yo2+4)})
-                el(isR,ltxt,xo+6,yo2+4)
+                local ltxt=nd("Text",{Text=lt,Color=lcolor,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=5,Position=Vector2.new(WX+xo+6,WY+yo2+4)})
+                addEl(ltxt,xo+6,yo2+4)
                 if isR then rYo=yo2+18 else lYo=yo2+18 end
             end
 
@@ -383,8 +377,8 @@ function DrawLib:CreateWindow(cfg)
                 local yo2=isR and rYo or lYo
                 local bbg=nd("Square",{Filled=true,Color=T.SEP,Transparency=1,ZIndex=5,Size=Vector2.new(colW-12,20),Position=Vector2.new(WX+xo+6,WY+yo2+2)})
                 local btt=nd("Text",{Text=bn,Color=T.White,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=6,Position=Vector2.new(WX+xo+colW/2-20,WY+yo2+5)})
-                el(isR,bbg,xo+6,yo2+2,btt,xo+colW/2-20,yo2+5)
-                addH(isR,xo+6,yo2+2,colW-12,20,function()
+                addEl(bbg,xo+6,yo2+2,btt,xo+colW/2-20,yo2+5)
+                addH(xo+6,yo2+2,colW-12,20,function()
                     bbg.Color=T.Pink;task.delay(0.1,function()bbg.Color=T.SEP end)
                     pcall(bcb)
                 end)
