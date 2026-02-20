@@ -1,4 +1,4 @@
--- NoFear Drawing UI Library v9.1
+-- NoFear Drawing UI Library v9.2
 -- Fixed: gpe blocking clicks, slider double-handler, Transparency on tab elements, stars visibility
 
 local DrawLib = {}
@@ -311,37 +311,73 @@ function DrawLib:CreateWindow(cfg)
 
     function W:Notify(text, duration)
         duration = duration or 3
-        local vp = workspace.CurrentCamera.ViewportSize
-        local cx = vp.X / 2
-        local cy = 24
-        local nW = 340
-        local nH = 38
+        pcall(function()
+            local Players = game:GetService("Players")
+            local TweenService = game:GetService("TweenService")
+            local PlayerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 
-        local nbg = Drawing.new("Square")
-        nbg.Filled = true; nbg.Color = Color3.fromRGB(18,18,18)
-        nbg.Transparency = 0.95; nbg.ZIndex = 99
-        nbg.Size = Vector2.new(nW, nH)
-        nbg.Position = Vector2.new(cx - nW/2, cy)
-        nbg.Visible = true
+            local ScreenGui = PlayerGui:FindFirstChild("NoFearNotifications")
+            if not ScreenGui then
+                ScreenGui = Instance.new("ScreenGui")
+                ScreenGui.Name = "NoFearNotifications"
+                ScreenGui.ResetOnSpawn = false
+                ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+                ScreenGui.Parent = PlayerGui
+            end
 
-        local nbord = Drawing.new("Square")
-        nbord.Filled = false; nbord.Color = T.Pink
-        nbord.Transparency = 1; nbord.Thickness = 1; nbord.ZIndex = 100
-        nbord.Size = Vector2.new(nW, nH)
-        nbord.Position = Vector2.new(cx - nW/2, cy)
-        nbord.Visible = true
+            local nW, nH = 340, 52
+            local Notification = Instance.new("Frame")
+            Notification.Size = UDim2.new(0, nW, 0, nH)
+            Notification.Position = UDim2.new(0.5, -nW/2, 0, -nH - 10)
+            Notification.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+            Notification.BorderSizePixel = 0
+            Notification.ZIndex = 1000
+            Notification.Parent = ScreenGui
 
-        local ntxt = Drawing.new("Text")
-        ntxt.Text = tostring(text); ntxt.Color = Color3.fromRGB(210,210,210)
-        ntxt.Transparency = 1; ntxt.Size = 13; ntxt.Font = Drawing.Fonts.Gotham
-        ntxt.Outline = false; ntxt.Center = true; ntxt.ZIndex = 101
-        ntxt.Position = Vector2.new(cx, cy + 12)
-        ntxt.Visible = true
+            local Corner = Instance.new("UICorner")
+            Corner.CornerRadius = UDim.new(0, 6)
+            Corner.Parent = Notification
 
-        task.delay(duration, function()
-            pcall(function() nbg:Remove() end)
-            pcall(function() nbord:Remove() end)
-            pcall(function() ntxt:Remove() end)
+            local Stroke = Instance.new("UIStroke")
+            Stroke.Color = Color3.fromRGB(255, 105, 180)
+            Stroke.Thickness = 1.5
+            Stroke.Transparency = 0.2
+            Stroke.Parent = Notification
+
+            local Label = Instance.new("TextLabel")
+            Label.Size = UDim2.new(1, -20, 1, -10)
+            Label.Position = UDim2.new(0, 10, 0, 5)
+            Label.BackgroundTransparency = 1
+            Label.Text = tostring(text)
+            Label.TextColor3 = Color3.fromRGB(210, 210, 210)
+            Label.TextSize = 14
+            Label.Font = Enum.Font.GothamBold
+            Label.TextWrapped = true
+            Label.TextXAlignment = Enum.TextXAlignment.Center
+            Label.TextYAlignment = Enum.TextYAlignment.Center
+            Label.ZIndex = 1001
+            Label.Parent = Notification
+
+            -- Slide in
+            local tweenIn = TweenService:Create(Notification,
+                TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+                {Position = UDim2.new(0.5, -nW/2, 0, 16)}
+            )
+            tweenIn:Play()
+
+            -- Slide out after duration
+            task.delay(duration, function()
+                if Notification and Notification.Parent then
+                    local tweenOut = TweenService:Create(Notification,
+                        TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In),
+                        {Position = UDim2.new(0.5, -nW/2, 0, -nH - 10)}
+                    )
+                    tweenOut:Play()
+                    tweenOut.Completed:Connect(function()
+                        if Notification then Notification:Destroy() end
+                    end)
+                end
+            end)
         end)
     end
 
