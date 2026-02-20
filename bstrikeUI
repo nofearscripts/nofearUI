@@ -54,27 +54,27 @@ function DrawLib:CreateWindow(cfg)
     
     -- ── Window Chrome ──────────────────────────────────────────────────────────
     -- Main bg
-    local dMain = D("Square",{Filled=true,Color=T.BG,Transparency=0,ZIndex=1,Size=Vector2.new(WW,WH),Position=Vector2.new(WX,WY)})
+    local dMain = D("Square",{Filled=true,Color=T.BG,Transparency=1,ZIndex=1,Size=Vector2.new(WW,WH),Position=Vector2.new(WX,WY)})
     -- Title bar
-    local dTBar = D("Square",{Filled=true,Color=T.SB,Transparency=0,ZIndex=2,Size=Vector2.new(WW,TBH),Position=Vector2.new(WX,WY)})
+    local dTBar = D("Square",{Filled=true,Color=T.SB,Transparency=1,ZIndex=2,Size=Vector2.new(WW,TBH),Position=Vector2.new(WX,WY)})
     -- Title text
     local dTitle = D("Text",{Text=title,Color=T.Pink,Size=14,Font=Drawing.Fonts.GothamBold,Outline=false,ZIndex=3,Position=Vector2.new(WX+10,WY+8)})
     -- Game label
     local dGame = D("Text",{Text=game_name,Color=T.Dim,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=3,Position=Vector2.new(WX+WW-100,WY+10)})
     -- Sidebar bg
-    local dSB = D("Square",{Filled=true,Color=T.SB,Transparency=0,ZIndex=2,Size=Vector2.new(SBW,WH-TBH-BBH),Position=Vector2.new(WX,WY+TBH)})
+    local dSB = D("Square",{Filled=true,Color=T.SB,Transparency=1,ZIndex=2,Size=Vector2.new(SBW,WH-TBH-BBH),Position=Vector2.new(WX,WY+TBH)})
     -- Sidebar right border
-    local dSBLine = D("Line",{Color=T.SEP,Thickness=1,Transparency=0,ZIndex=3,From=Vector2.new(WX+SBW,WY+TBH),To=Vector2.new(WX+SBW,WY+WH-BBH)})
+    local dSBLine = D("Line",{Color=T.SEP,Thickness=1,Transparency=1,ZIndex=3,From=Vector2.new(WX+SBW,WY+TBH),To=Vector2.new(WX+SBW,WY+WH-BBH)})
     -- Center divider
-    local dCLine = D("Line",{Color=T.SEP,Thickness=1,Transparency=0,ZIndex=3,From=Vector2.new(WX+SBW+COL_W+1,WY+TBH),To=Vector2.new(WX+SBW+COL_W+1,WY+WH-BBH)})
+    local dCLine = D("Line",{Color=T.SEP,Thickness=1,Transparency=1,ZIndex=3,From=Vector2.new(WX+SBW+COL_W+1,WY+TBH),To=Vector2.new(WX+SBW+COL_W+1,WY+WH-BBH)})
     -- Title bar bottom border
-    local dTLine = D("Line",{Color=T.SEP,Thickness=1,Transparency=0,ZIndex=3,From=Vector2.new(WX,WY+TBH),To=Vector2.new(WX+WW,WY+TBH)})
+    local dTLine = D("Line",{Color=T.SEP,Thickness=1,Transparency=1,ZIndex=3,From=Vector2.new(WX,WY+TBH),To=Vector2.new(WX+WW,WY+TBH)})
     -- Bottom bar
-    local dBBar = D("Square",{Filled=true,Color=T.SB,Transparency=0,ZIndex=2,Size=Vector2.new(WW,BBH),Position=Vector2.new(WX,WY+WH-BBH)})
-    local dBLine = D("Line",{Color=T.SEP,Thickness=1,Transparency=0,ZIndex=3,From=Vector2.new(WX,WY+WH-BBH),To=Vector2.new(WX+WW,WY+WH-BBH)})
+    local dBBar = D("Square",{Filled=true,Color=T.SB,Transparency=1,ZIndex=2,Size=Vector2.new(WW,BBH),Position=Vector2.new(WX,WY+WH-BBH)})
+    local dBLine = D("Line",{Color=T.SEP,Thickness=1,Transparency=1,ZIndex=3,From=Vector2.new(WX,WY+WH-BBH),To=Vector2.new(WX+WW,WY+WH-BBH)})
     local dBText = D("Text",{Text="Key System  -  discord.gg/G9QSXsB9wY",Color=T.Dim,Size=11,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=3,Position=Vector2.new(WX+WW/2-100,WY+WH-BBH+5)})
     -- Outer border
-    local dBorder = D("Square",{Filled=false,Color=T.SEP,Thickness=1,Transparency=0,ZIndex=2,Size=Vector2.new(WW,WH),Position=Vector2.new(WX,WY)})
+    local dBorder = D("Square",{Filled=false,Color=T.SEP,Thickness=1,Transparency=1,ZIndex=2,Size=Vector2.new(WW,WH),Position=Vector2.new(WX,WY)})
     
     -- ── Reposition all chrome drawings ─────────────────────────────────────────
     local function updateChrome()
@@ -133,11 +133,11 @@ function DrawLib:CreateWindow(cfg)
             local sz = math.random(2,5)
             local s1 = Drawing.new("Square")
             s1.Filled=true; s1.Color=Color3.new(1,1,1)
-            s1.Transparency=0.5; s1.Size=Vector2.new(sz,1)
+            s1.Transparency=1.5; s1.Size=Vector2.new(sz,1)
             s1.Position=Vector2.new(sx,sy); s1.ZIndex=10; s1.Visible=visible
             local s2 = Drawing.new("Square")
             s2.Filled=true; s2.Color=Color3.new(1,1,1)
-            s2.Transparency=0.5; s2.Size=Vector2.new(1,sz)
+            s2.Transparency=1.5; s2.Size=Vector2.new(1,sz)
             s2.Position=Vector2.new(sx,sy); s2.ZIndex=10; s2.Visible=visible
             task.spawn(function()
                 local t = 0
@@ -233,13 +233,13 @@ function DrawLib:CreateWindow(cfg)
         }
         
         -- Tab sidebar button
-        tab.dBG  = D("Square",{Filled=true,Color=T.SB,Transparency=0,ZIndex=4,Size=Vector2.new(SBW,34),Position=Vector2.new(WX,ty)})
-        tab.dAcc = D("Square",{Filled=true,Color=T.Pink,Transparency=0,ZIndex=5,Size=Vector2.new(3,20),Position=Vector2.new(WX,ty+7),Visible=false})
+        tab.dBG  = D("Square",{Filled=true,Color=T.SB,Transparency=1,ZIndex=4,Size=Vector2.new(SBW,34),Position=Vector2.new(WX,ty)})
+        tab.dAcc = D("Square",{Filled=true,Color=T.Pink,Transparency=1,ZIndex=5,Size=Vector2.new(3,20),Position=Vector2.new(WX,ty+7),Visible=false})
         tab.dTxt = D("Text",{Text=name,Color=T.Dim,Size=13,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=5,Position=Vector2.new(WX+14,ty+10)})
         
         -- Tab sep line
         if idx > 1 then
-            D("Line",{Color=T.SEP,Thickness=1,Transparency=0,ZIndex=4,From=Vector2.new(WX,ty),To=Vector2.new(WX+SBW,ty)})
+            D("Line",{Color=T.SEP,Thickness=1,Transparency=1,ZIndex=4,From=Vector2.new(WX,ty),To=Vector2.new(WX+SBW,ty)})
         end
         
         -- Activate this tab
@@ -320,13 +320,13 @@ function DrawLib:CreateWindow(cfg)
             local sy = isR and rightY or leftY
             
             -- Section header bg
-            tabD(newD("Square",{Filled=true,Color=T.BG2,Transparency=0,ZIndex=4,Size=Vector2.new(colW,20),Position=Vector2.new(sx,sy)}))
+            tabD(newD("Square",{Filled=true,Color=T.BG2,Transparency=1,ZIndex=4,Size=Vector2.new(colW,20),Position=Vector2.new(sx,sy)}))
             -- Section icon circle
-            tabD(newD("Square",{Filled=true,Color=T.Pink,Transparency=0,ZIndex=5,Size=Vector2.new(3,14),Position=Vector2.new(sx,sy+3)}))
+            tabD(newD("Square",{Filled=true,Color=T.Pink,Transparency=1,ZIndex=5,Size=Vector2.new(3,14),Position=Vector2.new(sx,sy+3)}))
             -- Section title
             tabD(newD("Text",{Text=sname,Color=T.White,Size=13,Font=Drawing.Fonts.GothamBold,Outline=false,ZIndex=5,Position=Vector2.new(sx+8,sy+3)}))
             -- Section separator
-            tabD(newD("Line",{Color=T.SEP,Thickness=1,Transparency=0,ZIndex=4,From=Vector2.new(sx,sy+20),To=Vector2.new(sx+colW,sy+20)}))
+            tabD(newD("Line",{Color=T.SEP,Thickness=1,Transparency=1,ZIndex=4,From=Vector2.new(sx,sy+20),To=Vector2.new(sx+colW,sy+20)}))
             
             if isR then rightY = sy+24 else leftY = sy+24 end
             
@@ -340,13 +340,13 @@ function DrawLib:CreateWindow(cfg)
                 local ty2 = isR and rightY or leftY
                 
                 -- Row bg
-                tabD(newD("Square",{Filled=true,Color=T.BG,Transparency=0,ZIndex=4,Size=Vector2.new(colW,24),Position=Vector2.new(sx,ty2)}))
+                tabD(newD("Square",{Filled=true,Color=T.BG,Transparency=1,ZIndex=4,Size=Vector2.new(colW,24),Position=Vector2.new(sx,ty2)}))
                 -- Label
                 tabD(newD("Text",{Text=tname,Color=T.Dim,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=5,Position=Vector2.new(sx+6,ty2+6)}))
                 -- Toggle track
-                local track = tabD(newD("Square",{Filled=true,Color=state and T.Pink or T.SEP,Transparency=0,ZIndex=5,Size=Vector2.new(28,14),Position=Vector2.new(sx+colW-34,ty2+5)}))
+                local track = tabD(newD("Square",{Filled=true,Color=state and T.Pink or T.SEP,Transparency=1,ZIndex=5,Size=Vector2.new(28,14),Position=Vector2.new(sx+colW-34,ty2+5)}))
                 -- Toggle knob
-                local knob = tabD(newD("Square",{Filled=true,Color=T.White,Transparency=0,ZIndex=6,Size=Vector2.new(10,10),Position=Vector2.new(state and sx+colW-34+16 or sx+colW-34+2,ty2+7)}))
+                local knob = tabD(newD("Square",{Filled=true,Color=T.White,Transparency=1,ZIndex=6,Size=Vector2.new(10,10),Position=Vector2.new(state and sx+colW-34+16 or sx+colW-34+2,ty2+7)}))
                 
                 tabH({x=sx+colW-36,y=ty2+3,w=32,h=18,fn=function()
                     state=not state
@@ -369,14 +369,14 @@ function DrawLib:CreateWindow(cfg)
                 local slW = colW-12
                 
                 -- Row bg
-                tabD(newD("Square",{Filled=true,Color=T.BG,Transparency=0,ZIndex=4,Size=Vector2.new(colW,34),Position=Vector2.new(sx,ty2)}))
+                tabD(newD("Square",{Filled=true,Color=T.BG,Transparency=1,ZIndex=4,Size=Vector2.new(colW,34),Position=Vector2.new(sx,ty2)}))
                 -- Label + value
                 local slTxt = tabD(newD("Text",{Text=sname2..": "..tostring(val),Color=T.Dim,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=5,Position=Vector2.new(sx+6,ty2+4)}))
                 -- Track bg
-                tabD(newD("Square",{Filled=true,Color=T.SEP,Transparency=0,ZIndex=5,Size=Vector2.new(slW,4),Position=Vector2.new(sx+6,ty2+22)}))
+                tabD(newD("Square",{Filled=true,Color=T.SEP,Transparency=1,ZIndex=5,Size=Vector2.new(slW,4),Position=Vector2.new(sx+6,ty2+22)}))
                 -- Fill
                 local fillW = math.floor(((val-min)/(max-min))*slW)
-                local fill = tabD(newD("Square",{Filled=true,Color=T.Pink,Transparency=0,ZIndex=6,Size=Vector2.new(fillW,4),Position=Vector2.new(sx+6,ty2+22)}))
+                local fill = tabD(newD("Square",{Filled=true,Color=T.Pink,Transparency=1,ZIndex=6,Size=Vector2.new(fillW,4),Position=Vector2.new(sx+6,ty2+22)}))
                 
                 local sliding = false
                 tabH({x=sx+6,y=ty2+18,w=slW,h=12,fn=function()
@@ -411,11 +411,11 @@ function DrawLib:CreateWindow(cfg)
                 for i,o in ipairs(opts) do if tostring(o)==val2 then cidx=i break end end
                 
                 -- Row bg
-                tabD(newD("Square",{Filled=true,Color=T.BG,Transparency=0,ZIndex=4,Size=Vector2.new(colW,34),Position=Vector2.new(sx,ty2)}))
+                tabD(newD("Square",{Filled=true,Color=T.BG,Transparency=1,ZIndex=4,Size=Vector2.new(colW,34),Position=Vector2.new(sx,ty2)}))
                 -- Label
                 tabD(newD("Text",{Text=dname,Color=T.Dim,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=5,Position=Vector2.new(sx+6,ty2+4)}))
                 -- Dropdown box
-                tabD(newD("Square",{Filled=true,Color=T.SEP,Transparency=0,ZIndex=5,Size=Vector2.new(colW-12,16),Position=Vector2.new(sx+6,ty2+16)}))
+                tabD(newD("Square",{Filled=true,Color=T.SEP,Transparency=1,ZIndex=5,Size=Vector2.new(colW-12,16),Position=Vector2.new(sx+6,ty2+16)}))
                 local dTxt2 = tabD(newD("Text",{Text=val2,Color=T.White,Size=11,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=6,Position=Vector2.new(sx+9,ty2+18)}))
                 
                 tabH({x=sx+6,y=ty2+16,w=colW-12,h=16,fn=function()
@@ -442,7 +442,7 @@ function DrawLib:CreateWindow(cfg)
                 local bname = tostring(bcfg.Name or "Button")
                 local bcb   = bcfg.Callback or function() end
                 local ty2   = isR and rightY or leftY
-                local btn = tabD(newD("Square",{Filled=true,Color=T.SEP,Transparency=0,ZIndex=5,Size=Vector2.new(colW-12,20),Position=Vector2.new(sx+6,ty2+2)}))
+                local btn = tabD(newD("Square",{Filled=true,Color=T.SEP,Transparency=1,ZIndex=5,Size=Vector2.new(colW-12,20),Position=Vector2.new(sx+6,ty2+2)}))
                 tabD(newD("Text",{Text=bname,Color=T.White,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=6,Position=Vector2.new(sx+colW/2-20,ty2+5)}))
                 tabH({x=sx+6,y=ty2+2,w=colW-12,h=20,fn=function()
                     btn.Color=T.Pink; task.delay(0.1,function() btn.Color=T.SEP end)
