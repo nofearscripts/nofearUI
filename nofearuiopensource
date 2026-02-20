@@ -170,42 +170,47 @@ function UILib:CreateWindow(cfg)
     Main.Parent = Gui
     makecorner(Main, 6)
 
-    -- Subtle white glow around the UI
-    local Glow = Instance.new("ImageLabel", Main)
-    Glow.Size = UDim2.new(1,40,1,40)
-    Glow.Position = UDim2.new(0,-20,0,-20)
+    -- White glow around the UI (big, visible)
+    local Glow = Instance.new("ImageLabel", Gui)
+    Glow.Size = UDim2.new(0,900,0,720)
+    Glow.Position = UDim2.new(0.5,-450,0.5,-360)
     Glow.BackgroundTransparency = 1
-    Glow.Image = "rbxassetid://5028857084" -- radial glow image
+    Glow.Image = "rbxassetid://5028857084"
     Glow.ImageColor3 = Color3.fromRGB(255,255,255)
-    Glow.ImageTransparency = 0.82
+    Glow.ImageTransparency = 0.6
     Glow.ZIndex = 1
     Glow.ScaleType = Enum.ScaleType.Stretch
 
-    -- Falling white stars
-    task.spawn(function()
-        local starChars = {"✦","·","⋆","✧","*","•"}
-        while Gui and Gui.Parent do
-            local star = Instance.new("TextLabel", Gui)
-            star.BackgroundTransparency = 1
-            star.Text = starChars[math.random(1,#starChars)]
-            star.TextColor3 = Color3.fromRGB(255,255,255)
-            star.TextTransparency = math.random(30,70)/100
-            star.TextSize = math.random(8,18)
-            star.Font = Enum.Font.GothamBold
-            star.Size = UDim2.new(0,20,0,20)
-            star.Position = UDim2.new(math.random(0,100)/100, 0, -0.02, 0)
-            star.ZIndex = 1
-            star.Name = "Star"
+    -- Falling white stars (stop when UI closed/destroyed)
+    local starsRunning = true
+    local TweenService = game:GetService("TweenService")
 
-            -- Tween fall
-            local fallTime = math.random(35,80)/10
-            local tween = game:GetService("TweenService"):Create(star,
+    Main:GetPropertyChangedSignal("Visible"):Connect(function()
+        starsRunning = Main.Visible
+        Glow.Visible = Main.Visible
+    end)
+
+    task.spawn(function()
+        while starsRunning do
+            if not Main or not Main.Parent then break end
+            local star = Instance.new("Frame", Gui)
+            star.BackgroundColor3 = Color3.fromRGB(255,255,255)
+            star.BorderSizePixel = 0
+            local sz = math.random(2,5)
+            star.Size = UDim2.new(0,sz,0,sz)
+            star.Position = UDim2.new(math.random(0,100)/100, 0, -0.02, 0)
+            star.BackgroundTransparency = math.random(20,60)/100
+            star.ZIndex = 1
+            makecorner(star, sz)
+
+            local fallTime = math.random(40,90)/10
+            local tween = TweenService:Create(star,
                 TweenInfo.new(fallTime, Enum.EasingStyle.Linear),
-                { Position = UDim2.new(star.Position.X.Scale, 0, 1.05, 0), TextTransparency = 1 }
+                { Position = UDim2.new(star.Position.X.Scale, 0, 1.05, 0), BackgroundTransparency = 1 }
             )
             tween:Play()
             tween.Completed:Connect(function() star:Destroy() end)
-            task.wait(math.random(3,8)/10)
+            task.wait(math.random(2,6)/10)
         end
     end)
     print("[NoFear UILib] Window created, parented to:", Gui.Parent)
