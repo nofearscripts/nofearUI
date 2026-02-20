@@ -1,4 +1,4 @@
--- NoFear Drawing UI Library v9.1
+-- NoFear Drawing UI Library v9.3
 -- Fixed: gpe blocking clicks, slider double-handler, Transparency on tab elements, stars visibility
 
 local DrawLib = {}
@@ -308,7 +308,6 @@ function DrawLib:CreateWindow(cfg)
     end)
 
     local W={}
-    function W:Finalize() end
 
     function W:Notify(text, duration)
         duration = duration or 3
@@ -361,7 +360,6 @@ function DrawLib:CreateWindow(cfg)
             tab.sep=D("Line",{Color=T.SEP,Thickness=1,Transparency=1,ZIndex=4,From=Vector2.new(WX,ty),To=Vector2.new(WX+SBW,ty)})
         end
         table.insert(tabs,tab)
-        if idx==1 then activateTab(1) end
 
         local LXo = SBW+PAD
         local RXo = SBW+CW+PAD+1
@@ -377,13 +375,12 @@ function DrawLib:CreateWindow(cfg)
             if d2 then table.insert(allD,d2) end
             if d3 then table.insert(allD,d3) end
             if d4 then table.insert(allD,d4) end
-            -- Start hidden; reposition() will show/clip correctly
+            -- Start hidden; reposition() will show/clip correctly on next frame
             pcall(function()d.Visible=false end)
             if d2 then pcall(function()d2.Visible=false end) end
             if d3 then pcall(function()d3.Visible=false end) end
             if d4 then pcall(function()d4.Visible=false end) end
-            -- Trigger reposition so this element gets placed and shown correctly
-            reposition()
+            -- Do NOT call reposition() here — it corrupts state during tab construction
         end
 
         local function addH(ox,oy,w,h,fn)
@@ -544,13 +541,13 @@ function DrawLib:CreateWindow(cfg)
                             itxt.Position=Vector2.new(lx+4, iy+2); itxt.Visible=true
                             table.insert(dropListDraws, itxt)
 
-                            -- Handler uses absolute ax/ay so drag doesn't break positions
+                            -- Handler uses absolute ax/ay — no WX/WY dependency
                             local capturedVal = optVal
                             local capturedIdx = optIdx
                             local h = {
                                 ax = lx, ay = iy,
                                 w = lw, h = itemH,
-                                tabIdx = idx,
+                                tabIdx = activeTab, -- use activeTab at open time, not build time
                                 fn = function()
                                     val = capturedVal; ci = capturedIdx
                                     dvtxt.Text = val
@@ -568,7 +565,7 @@ function DrawLib:CreateWindow(cfg)
                             ua.Size=10; ua.Font=Drawing.Fonts.Gotham; ua.Outline=false
                             ua.ZIndex=53; ua.Position=Vector2.new(lx+lw-14, ly+2); ua.Visible=true
                             table.insert(dropListDraws, ua)
-                            local h={ax=lx+lw-16, ay=ly, w=16, h=itemH, tabIdx=idx,
+                            local h={ax=lx+lw-16, ay=ly, w=16, h=itemH, tabIdx=activeTab,
                                 fn=function()
                                     scrollOffset=math.max(0,scrollOffset-1)
                                     for _,d in ipairs(dropListDraws) do pcall(function()d:Remove()end) end
@@ -586,7 +583,7 @@ function DrawLib:CreateWindow(cfg)
                             da.ZIndex=53
                             da.Position=Vector2.new(lx+lw-14, ly+(math.min(maxVisible,#opts)-1)*itemH+2); da.Visible=true
                             table.insert(dropListDraws, da)
-                            local h={ax=lx+lw-16, ay=ly+(math.min(maxVisible,#opts)-1)*itemH, w=16, h=itemH, tabIdx=idx,
+                            local h={ax=lx+lw-16, ay=ly+(math.min(maxVisible,#opts)-1)*itemH, w=16, h=itemH, tabIdx=activeTab,
                                 fn=function()
                                     scrollOffset=math.min(#opts-maxVisible,scrollOffset+1)
                                     for _,d in ipairs(dropListDraws) do pcall(function()d:Remove()end) end
@@ -638,7 +635,13 @@ function DrawLib:CreateWindow(cfg)
 
             return Sec
         end
+
         return Tab
+    end
+
+    function W:Finalize()
+        activateTab(1)
+        reposition()
     end
 
     return W
