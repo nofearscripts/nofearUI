@@ -1,5 +1,5 @@
 --// ============================================================
---// NO.FEAR UI LIBRARY v1.0
+--// NO.FEAR UI LIBRARY v1.0 (Chiyo-style)
 --// ============================================================
 -- Usage:
 --   local UI = loadstring(game:HttpGet("...NoFear_UILib.lua"))()
@@ -258,7 +258,7 @@ function UILib:CreateWindow(cfg)
     LogoImg.Position = UDim2.new(0,6,0.5,-13)
     LogoImg.BackgroundTransparency = 1
     LogoImg.BorderSizePixel = 0
-    LogoImg.Image = cfg.LogoId or "rbxassetid://107275426922990"
+    LogoImg.Image = cfg.LogoId or "rbxthumb://type=Asset&id=107275426922990&w=420&h=420"
     LogoImg.ImageColor3 = Color3.fromRGB(255,255,255)
     LogoImg.ScaleType = Enum.ScaleType.Fit
     LogoImg.ZIndex = 7
