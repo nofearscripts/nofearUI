@@ -1,4 +1,4 @@
--- NO.FEAR Drawing UI Library v6.0 (RenderStepped architecture)
+-- NO.FEAR Drawing UI Library v6.0 (RenderStepped architecture
 -- All positions recalculated every frame from WX/WY
 -- Zero closures for positions, zero allD complexity
 
@@ -414,6 +414,15 @@ function DrawLib:CreateWindow(cfg)
             end
         end
     end)
+
+    -- Finalize — no-op for compatibility
+    function S:Finalize() end
+
+    function S:Destroy()
+        conn:Disconnect()
+        for _,d in ipairs(draws) do pcall(function() d:Remove() end) end
+        for _,st in ipairs(stars) do pcall(function() st.s1:Remove(); st.s2:Remove() end) end
+    end
 
     return S
 end
