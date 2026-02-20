@@ -157,68 +157,85 @@ function DrawLib:CreateWindow(cfg)
         end
     end)
 
-    -- Drag
-    RS:BindToRenderStep("NFUIv9Drag",1,function()
-        if dragging then
-            WX=mouse.X-dox;WY=mouse.Y-doy
-            reposition()
+    -- Input state tracking via polling (avoids InputBegan being swallowed by game)
+    local wasDown = false
+
+    -- Toggle key: still use InputBegan for keypress (keys are not swallowed like mouse)
+    UIS.InputBegan:Connect(function(inp, gpe)
+        if inp.KeyCode == toggleKey then
+            setVisible(not visible)
         end
     end)
 
-    -- Single input handler
-    -- NOTE: we do NOT check `gpe` here — BloxStrike marks most input as game-processed,
-    -- which would silently block all UI clicks if we returned on gpe.
-    UIS.InputBegan:Connect(function(inp,gpe)
-        if inp.KeyCode==toggleKey then setVisible(not visible);return end
-        if inp.UserInputType~=Enum.UserInputType.MouseButton1 then return end
-        local mx,my=mouse.X,mouse.Y
-        -- Drag: only start drag when UI is visible
-        if visible and my>=WY and my<=WY+TBH and mx>=WX and mx<=WX+WW then
-            dragging=true;dox=mx-WX;doy=my-WY;return
-        end
-        if not visible then return end
-        -- Tab click (use live WX/WY)
-        for i,tab in ipairs(tabs) do
-            local tx=WX;local ty=WY+TBH+(i-1)*34
-            if mx>=tx and mx<=tx+SBW and my>=ty and my<=ty+34 then
-                activateTab(i);return
+    -- Main poll loop: runs every frame, checks mouse button state directly
+    RS:BindToRenderStep("NFUIv9Poll", Enum.RenderPriority.Input.Value, function()
+        local ml = UIS:GetMouseLocation()
+        local mx, my = ml.X, ml.Y
+        local isDown = UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)
+
+        -- Drag update every frame while held
+        if dragging then
+            if isDown then
+                WX = mx - dox
+                WY = my - doy
+                reposition()
+            else
+                dragging = false
             end
         end
-        -- Element handlers (use live WX/WY + stored offsets)
-        for _,h in ipairs(handlers) do
-            if h.tabIdx==activeTab then
-                local ax=WX+h.ox;local ay=WY+h.oy
-                if mx>=ax and mx<=ax+h.w and my>=ay and my<=ay+h.h then
-                    -- sliders use clickfn to start sliding; others use fn
+
+        -- Slider update every frame while sliding
+        for _, h in ipairs(handlers) do
+            if h.isSlider and h.sliding then
+                if isDown then
+                    local pct = math.clamp((mx - (WX + h.ox)) / h.slW, 0, 1)
+                    local val = math.floor(h.mn + pct * (h.mx - h.mn))
+                    h.fill.Size = Vector2.new(math.max(1, math.floor(pct * h.slW)), 4)
+                    h.vtxt.Text = h.name .. ": " .. tostring(val)
+                    pcall(h.fn, val)
+                else
+                    h.sliding = false
+                end
+            end
+        end
+
+        -- Detect fresh click (transition from up to down)
+        local justClicked = isDown and not wasDown
+        wasDown = isDown
+
+        if not justClicked then return end
+        if not visible then return end
+
+        -- Drag start: click on title bar
+        if my >= WY and my <= WY + TBH and mx >= WX and mx <= WX + WW then
+            dragging = true
+            dox = mx - WX
+            doy = my - WY
+            return
+        end
+
+        -- Tab click
+        for i, tab in ipairs(tabs) do
+            local ty = WY + TBH + (i - 1) * 34
+            if mx >= WX and mx <= WX + SBW and my >= ty and my <= ty + 34 then
+                activateTab(i)
+                return
+            end
+        end
+
+        -- Element handlers
+        for _, h in ipairs(handlers) do
+            if h.tabIdx == activeTab then
+                local ax = WX + h.ox
+                local ay = WY + h.oy
+                if mx >= ax and mx <= ax + h.w and my >= ay and my <= ay + h.h then
                     if h.isSlider then
-                        pcall(h.clickfn)
+                        h.sliding = true
                     else
                         pcall(h.fn)
                     end
                     return
                 end
-            end
-        end
-    end)
-
-    UIS.InputEnded:Connect(function(inp)
-        if inp.UserInputType==Enum.UserInputType.MouseButton1 then
-            dragging=false
-            -- Stop all sliders
-            for _,h in ipairs(handlers) do
-                if h.isSlider then h.sliding=false end
-            end
-        end
-    end)
-
-    RS:BindToRenderStep("NFUIv9Slider",2,function()
-        for _,h in ipairs(handlers) do
-            if h.isSlider and h.sliding then
-                local pct=math.clamp((mouse.X-(WX+h.ox))/h.slW,0,1)
-                local val=math.floor(h.mn+pct*(h.mx-h.mn))
-                h.fill.Size=Vector2.new(math.max(1,math.floor(pct*h.slW)),4)
-                h.vtxt.Text=h.name..": "..tostring(val)
-                pcall(h.fn,val)
             end
         end
     end)
@@ -333,9 +350,8 @@ function DrawLib:CreateWindow(cfg)
 
                 addEl(rbg,xo,yo2,stxt,xo+6,yo2+4,strack,xo+6,yo2+22,sfill,xo+6,yo2+22)
 
-                -- Single slider handler: clicking it starts sliding
+                -- Slider handler: poll loop sets sliding=true on click, updates value every frame
                 local h={ox=xo+6,oy=yo2+18,w=slW,h=12,tabIdx=idx,isSlider=true,sliding=false,mn=mn,mx=mx2,slW=slW,fill=sfill,vtxt=stxt,name=sn2,fn=cb}
-                h.clickfn = function() h.sliding=true end
                 table.insert(handlers,h)
 
                 if isR then rYo=yo2+36 else lYo=yo2+36 end
