@@ -1,4 +1,4 @@
--- NoFear Drawing UI Library v9.1
+-- NoFear Drawing UI Library v9.11
 -- Fixed: gpe blocking clicks, slider double-handler, Transparency on tab elements, stars visibility
 
 local DrawLib = {}
