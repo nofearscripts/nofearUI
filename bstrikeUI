@@ -1,5 +1,5 @@
--- NoFear Drawing UI Library v9.0
--- Clean rewrite: offsets from WX/WY, single input handler, no duplicate allD inserts
+-- NoFear Drawing UI Library v9.1
+-- Fixed: gpe blocking clicks, slider double-handler, Transparency on tab elements, stars visibility
 
 local DrawLib = {}
 local UIS = game:GetService("UserInputService")
@@ -140,8 +140,8 @@ function DrawLib:CreateWindow(cfg)
             local sx=math.random(WX+SBW+5,WX+WW-15)
             local spd=math.random(50,120)
             local sz=math.random(2,4)
-            local s1=Drawing.new("Square");s1.Filled=true;s1.Color=Color3.new(1,1,1);s1.Transparency=0.7;s1.Size=Vector2.new(sz,1);s1.ZIndex=20;s1.Visible=true
-            local s2=Drawing.new("Square");s2.Filled=true;s2.Color=Color3.new(1,1,1);s2.Transparency=0.7;s2.Size=Vector2.new(1,sz);s2.ZIndex=20;s2.Visible=true
+            local s1=Drawing.new("Square");s1.Filled=true;s1.Color=Color3.new(1,1,1);s1.Transparency=1;s1.Size=Vector2.new(sz,1);s1.ZIndex=20;s1.Visible=true
+            local s2=Drawing.new("Square");s2.Filled=true;s2.Color=Color3.new(1,1,1);s2.Transparency=1;s2.Size=Vector2.new(1,sz);s2.ZIndex=20;s2.Visible=true
             task.spawn(function()
                 local t2=0;local dur=(WH-TBH-BBH)/spd
                 while t2<dur do
@@ -166,13 +166,14 @@ function DrawLib:CreateWindow(cfg)
     end)
 
     -- Single input handler
+    -- NOTE: we do NOT check `gpe` here — BloxStrike marks most input as game-processed,
+    -- which would silently block all UI clicks if we returned on gpe.
     UIS.InputBegan:Connect(function(inp,gpe)
-        if gpe then return end
         if inp.KeyCode==toggleKey then setVisible(not visible);return end
         if inp.UserInputType~=Enum.UserInputType.MouseButton1 then return end
         local mx,my=mouse.X,mouse.Y
-        -- Drag
-        if my>=WY and my<=WY+TBH and mx>=WX and mx<=WX+WW then
+        -- Drag: only start drag when UI is visible
+        if visible and my>=WY and my<=WY+TBH and mx>=WX and mx<=WX+WW then
             dragging=true;dox=mx-WX;doy=my-WY;return
         end
         if not visible then return end
@@ -188,7 +189,13 @@ function DrawLib:CreateWindow(cfg)
             if h.tabIdx==activeTab then
                 local ax=WX+h.ox;local ay=WY+h.oy
                 if mx>=ax and mx<=ax+h.w and my>=ay and my<=ay+h.h then
-                    pcall(h.fn);return
+                    -- sliders use clickfn to start sliding; others use fn
+                    if h.isSlider then
+                        pcall(h.clickfn)
+                    else
+                        pcall(h.fn)
+                    end
+                    return
                 end
             end
         end
@@ -228,7 +235,7 @@ function DrawLib:CreateWindow(cfg)
         local tab={name=tname,els={}}
         tab.bg  = D("Square",{Filled=true,Color=T.SB,Transparency=1,ZIndex=4,Size=Vector2.new(SBW,34),Position=Vector2.new(WX,ty)})
         tab.acc = D("Square",{Filled=true,Color=T.Pink,Transparency=1,ZIndex=5,Size=Vector2.new(3,20),Position=Vector2.new(WX,ty+7),Visible=false})
-        tab.txt = D("Text",{Text=tname,Color=T.Dim,Size=13,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=5,Position=Vector2.new(WX+14,ty+10)})
+        tab.txt = D("Text",{Text=tname,Color=T.Dim,Transparency=1,Size=13,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=5,Position=Vector2.new(WX+14,ty+10)})
         tab.sep = nil
         if idx>1 then
             tab.sep=D("Line",{Color=T.SEP,Thickness=1,Transparency=1,ZIndex=4,From=Vector2.new(WX,ty),To=Vector2.new(WX+SBW,ty)})
@@ -270,7 +277,7 @@ function DrawLib:CreateWindow(cfg)
 
             local hbg  = nd("Square",{Filled=true,Color=T.BG2,Transparency=1,ZIndex=4,Size=Vector2.new(colW,20),Position=Vector2.new(WX+xo,WY+yo)})
             local hacc = nd("Square",{Filled=true,Color=T.Pink,Transparency=1,ZIndex=5,Size=Vector2.new(3,14),Position=Vector2.new(WX+xo,WY+yo+3)})
-            local htxt = nd("Text",{Text=sn,Color=T.White,Size=13,Font=Drawing.Fonts.GothamBold,Outline=false,ZIndex=5,Position=Vector2.new(WX+xo+8,WY+yo+3)})
+            local htxt = nd("Text",{Text=sn,Color=T.White,Transparency=1,Size=13,Font=Drawing.Fonts.GothamBold,Outline=false,ZIndex=5,Position=Vector2.new(WX+xo+8,WY+yo+3)})
             local hsep = nd("Line",{Color=T.SEP,Thickness=1,Transparency=1,ZIndex=4,From=Vector2.new(WX+xo,WY+yo+20),To=Vector2.new(WX+xo+colW,WY+yo+20)})
             addEl(hbg,xo,yo,hacc,xo,yo+3,htxt,xo+8,yo+3)
             addEl(hsep,xo,yo+20,nil,nil,nil,nil,nil,nil,nil,nil,nil,true,colW)
@@ -287,7 +294,7 @@ function DrawLib:CreateWindow(cfg)
                 local kox_off=state and colW-34+16 or colW-34+2
 
                 local rbg  =nd("Square",{Filled=true,Color=T.BG,Transparency=1,ZIndex=4,Size=Vector2.new(colW,24),Position=Vector2.new(WX+xo,WY+yo2)})
-                local rtxt =nd("Text",{Text=tn,Color=T.Dim,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=5,Position=Vector2.new(WX+xo+6,WY+yo2+6)})
+                local rtxt =nd("Text",{Text=tn,Color=T.Dim,Transparency=1,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=5,Position=Vector2.new(WX+xo+6,WY+yo2+6)})
                 local track=nd("Square",{Filled=true,Color=state and T.Pink or T.SEP,Transparency=1,ZIndex=5,Size=Vector2.new(28,14),Position=Vector2.new(WX+xo+colW-34,WY+yo2+5)})
                 local knob =nd("Square",{Filled=true,Color=T.White,Transparency=1,ZIndex=6,Size=Vector2.new(10,10),Position=Vector2.new(WX+xo+kox_off,WY+yo2+7)})
 
@@ -319,18 +326,17 @@ function DrawLib:CreateWindow(cfg)
                 local slW=colW-12
 
                 local rbg  =nd("Square",{Filled=true,Color=T.BG,Transparency=1,ZIndex=4,Size=Vector2.new(colW,34),Position=Vector2.new(WX+xo,WY+yo2)})
-                local stxt =nd("Text",{Text=sn2..": "..tostring(val),Color=T.Dim,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=5,Position=Vector2.new(WX+xo+6,WY+yo2+4)})
+                local stxt =nd("Text",{Text=sn2..": "..tostring(val),Color=T.Dim,Transparency=1,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=5,Position=Vector2.new(WX+xo+6,WY+yo2+4)})
                 local strack=nd("Square",{Filled=true,Color=T.SEP,Transparency=1,ZIndex=5,Size=Vector2.new(slW,4),Position=Vector2.new(WX+xo+6,WY+yo2+22)})
                 local pct0=((val-mn)/(mx2-mn))
                 local sfill=nd("Square",{Filled=true,Color=T.Pink,Transparency=1,ZIndex=6,Size=Vector2.new(math.max(1,math.floor(pct0*slW)),4),Position=Vector2.new(WX+xo+6,WY+yo2+22)})
 
                 addEl(rbg,xo,yo2,stxt,xo+6,yo2+4,strack,xo+6,yo2+22,sfill,xo+6,yo2+22)
 
+                -- Single slider handler: clicking it starts sliding
                 local h={ox=xo+6,oy=yo2+18,w=slW,h=12,tabIdx=idx,isSlider=true,sliding=false,mn=mn,mx=mx2,slW=slW,fill=sfill,vtxt=stxt,name=sn2,fn=cb}
+                h.clickfn = function() h.sliding=true end
                 table.insert(handlers,h)
-                addH(xo+6,yo2+18,slW,12,function() h.sliding=true end)
-                -- override last handler with slider ref
-                handlers[#handlers]=h
 
                 if isR then rYo=yo2+36 else lYo=yo2+36 end
             end
@@ -346,9 +352,9 @@ function DrawLib:CreateWindow(cfg)
                 for i,o in ipairs(opts) do if tostring(o)==val then ci=i;break end end
 
                 local rbg =nd("Square",{Filled=true,Color=T.BG,Transparency=1,ZIndex=4,Size=Vector2.new(colW,34),Position=Vector2.new(WX+xo,WY+yo2)})
-                local dtxt=nd("Text",{Text=dn,Color=T.Dim,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=5,Position=Vector2.new(WX+xo+6,WY+yo2+4)})
+                local dtxt=nd("Text",{Text=dn,Color=T.Dim,Transparency=1,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=5,Position=Vector2.new(WX+xo+6,WY+yo2+4)})
                 local dbox=nd("Square",{Filled=true,Color=T.SEP,Transparency=1,ZIndex=5,Size=Vector2.new(colW-12,16),Position=Vector2.new(WX+xo+6,WY+yo2+16)})
-                local dvtxt=nd("Text",{Text=val,Color=T.White,Size=11,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=6,Position=Vector2.new(WX+xo+9,WY+yo2+18)})
+                local dvtxt=nd("Text",{Text=val,Color=T.White,Transparency=1,Size=11,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=6,Position=Vector2.new(WX+xo+9,WY+yo2+18)})
 
                 addEl(rbg,xo,yo2,dtxt,xo+6,yo2+4,dbox,xo+6,yo2+16,dvtxt,xo+9,yo2+18)
                 addH(xo+6,yo2+16,colW-12,16,function()
@@ -365,7 +371,7 @@ function DrawLib:CreateWindow(cfg)
                 local lt=tostring(lc.Text or "")
                 local lcolor=lc.Color or T.Dim
                 local yo2=isR and rYo or lYo
-                local ltxt=nd("Text",{Text=lt,Color=lcolor,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=5,Position=Vector2.new(WX+xo+6,WY+yo2+4)})
+                local ltxt=nd("Text",{Text=lt,Color=lcolor,Transparency=1,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=5,Position=Vector2.new(WX+xo+6,WY+yo2+4)})
                 addEl(ltxt,xo+6,yo2+4)
                 if isR then rYo=yo2+18 else lYo=yo2+18 end
             end
@@ -376,7 +382,7 @@ function DrawLib:CreateWindow(cfg)
                 local bcb=bc.Callback or function()end
                 local yo2=isR and rYo or lYo
                 local bbg=nd("Square",{Filled=true,Color=T.SEP,Transparency=1,ZIndex=5,Size=Vector2.new(colW-12,20),Position=Vector2.new(WX+xo+6,WY+yo2+2)})
-                local btt=nd("Text",{Text=bn,Color=T.White,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=6,Position=Vector2.new(WX+xo+colW/2-20,WY+yo2+5)})
+                local btt=nd("Text",{Text=bn,Color=T.White,Transparency=1,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=6,Position=Vector2.new(WX+xo+colW/2-20,WY+yo2+5)})
                 addEl(bbg,xo+6,yo2+2,btt,xo+colW/2-20,yo2+5)
                 addH(xo+6,yo2+2,colW-12,20,function()
                     bbg.Color=T.Pink;task.delay(0.1,function()bbg.Color=T.SEP end)
