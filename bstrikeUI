@@ -1,4 +1,4 @@
--- NoFear Drawing UI Library v9.3
+-- NoFear Drawing UI Library v9.1
 -- Fixed: gpe blocking clicks, slider double-handler, Transparency on tab elements, stars visibility
 
 local DrawLib = {}
@@ -479,7 +479,7 @@ function DrawLib:CreateWindow(cfg)
                 addEl(rbg,xo,yo2,dtxt,xo+6,yo2+4,dbox,xo+6,yo2+16,dvtxt,xo+9,yo2+18)
                 addEl(darr,xo+colW-20,yo2+18)
 
-                local itemH = 16
+                local itemH = 20
                 local maxVisible = 8
                 local scrollOffset = 0
                 local isOpen = false
@@ -500,9 +500,22 @@ function DrawLib:CreateWindow(cfg)
                         -- Compute absolute positions fresh from live WX/WY + scroll
                         local sc3 = tabScrollY[idx] or 0
                         local lx = WX + xo + 6
-                        local ly = WY + yo2 + 34 - sc3
                         local lw = colW - 12
                         local visCount = math.min(maxVisible, #opts)
+                        local listH = visCount * itemH + 2
+                        -- Dropdown box absolute Y position (accounting for scroll)
+                        local boxAbsY = WY + yo2 - sc3
+                        -- Try to open downward; if it goes off screen, open upward
+                        local vp = workspace.CurrentCamera.ViewportSize
+                        local ly
+                        if boxAbsY + 34 + listH <= vp.Y then
+                            ly = boxAbsY + 34  -- open downward
+                        else
+                            ly = boxAbsY - listH  -- open upward
+                        end
+                        -- Clamp to screen bounds
+                        ly = math.max(0, math.min(ly, vp.Y - listH))
+                        lx = math.max(0, math.min(lx, vp.X - lw - 2))
 
                         -- Background panel
                         local pbg = Drawing.new("Square")
@@ -526,19 +539,26 @@ function DrawLib:CreateWindow(cfg)
                             local isSel = (optVal == val)
 
                             local ibg = Drawing.new("Square")
-                            ibg.Filled=true
+                            ibg.Filled = true
                             ibg.Color = isSel and T.Pink or Color3.fromRGB(35,35,35)
                             ibg.Transparency = 1
-                            ibg.ZIndex=52; ibg.Size=Vector2.new(lw, itemH)
-                            ibg.Position=Vector2.new(lx, iy); ibg.Visible=true
+                            ibg.ZIndex = 52
+                            ibg.Size = Vector2.new(lw, itemH)
+                            ibg.Position = Vector2.new(lx, iy)
+                            ibg.Visible = true
                             table.insert(dropListDraws, ibg)
 
                             local itxt = Drawing.new("Text")
-                            itxt.Text=optVal
+                            itxt.Text = optVal
                             itxt.Color = isSel and Color3.fromRGB(22,22,22) or T.White
-                            itxt.Transparency=1; itxt.Size=11; itxt.Font=Drawing.Fonts.Gotham
-                            itxt.Outline=false; itxt.ZIndex=53
-                            itxt.Position=Vector2.new(lx+4, iy+2); itxt.Visible=true
+                            itxt.Transparency = 1
+                            itxt.Size = 13
+                            pcall(function() itxt.Font = Drawing.Fonts.Gotham end)
+                            itxt.Outline = false
+                            itxt.Center = false
+                            itxt.ZIndex = 53
+                            itxt.Position = Vector2.new(lx+4, iy+2)
+                            itxt.Visible = true
                             table.insert(dropListDraws, itxt)
 
                             -- Handler uses absolute ax/ay — no WX/WY dependency
@@ -597,7 +617,7 @@ function DrawLib:CreateWindow(cfg)
                     buildList()
                 end
 
-                addH(xo+6, yo2+16, colW-12, 16, function()
+                addH(xo+6, yo2+16, colW-12, 20, function()
                     if isOpen then
                         closeOpenDropdown()
                     else
