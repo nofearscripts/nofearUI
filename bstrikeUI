@@ -1,4 +1,4 @@
--- NoFear Drawing UI Library v9.1
+-- NoFear Drawing UI Library v9.2
 -- Fixed: gpe blocking clicks, slider double-handler, Transparency on tab elements, stars visibility
 
 local DrawLib = {}
@@ -416,74 +416,141 @@ function DrawLib:CreateWindow(cfg)
                 local dtxt =nd("Text",{Text=dn,Color=T.Dim,Transparency=1,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=5,Position=Vector2.new(WX+xo+6,WY+yo2+4)})
                 local dbox =nd("Square",{Filled=true,Color=T.SEP,Transparency=1,ZIndex=5,Size=Vector2.new(colW-12,16),Position=Vector2.new(WX+xo+6,WY+yo2+16)})
                 local dvtxt=nd("Text",{Text=val,Color=T.White,Transparency=1,Size=11,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=6,Position=Vector2.new(WX+xo+9,WY+yo2+18)})
-                local darr =nd("Text",{Text="▼",Color=T.Dim,Transparency=1,Size=10,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=6,Position=Vector2.new(WX+xo+colW-20,WY+yo2+18)})
+                local darr =nd("Text",{Text="v",Color=T.Dim,Transparency=1,Size=10,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=6,Position=Vector2.new(WX+xo+colW-20,WY+yo2+18)})
 
                 addEl(rbg,xo,yo2,dtxt,xo+6,yo2+4,dbox,xo+6,yo2+16,dvtxt,xo+9,yo2+18)
                 addEl(darr,xo+colW-20,yo2+18)
 
-                -- Open/close list state
+                -- Dropdown state
                 local isOpen = false
                 local listDrawings = {}
+                local listHandlerCount = 0
+                -- Fixed absolute screen position for the list (relative to where the dropdown box is)
+                local listAbsX = WX+xo+6
+                local listAbsY = WY+yo2+34
+                local itemH = 16
+                -- Max visible items before scrolling
+                local maxVisible = 8
+                local scrollOffset = 0
 
                 local function closeList()
                     isOpen = false
-                    darr.Text = "▼"
+                    darr.Text = "v"
                     for _, d in ipairs(listDrawings) do pcall(function() d:Remove() end) end
                     listDrawings = {}
-                    -- Remove list handlers
-                    for i = #handlers, 1, -1 do
-                        if handlers[i].isDropdownItem then
-                            table.remove(handlers, i)
+                    for k = #handlers, #handlers - listHandlerCount + 1, -1 do
+                        if handlers[k] and handlers[k].isDropdownItem then
+                            table.remove(handlers, k)
                         end
                     end
+                    listHandlerCount = 0
                 end
 
-                local function openList()
-                    isOpen = true
-                    darr.Text = "▲"
-                    local itemH = 16
-                    for i, opt in ipairs(opts) do
-                        local iy = WY + yo2 + 34 + (i-1)*itemH
+                local function buildList()
+                    -- Clear old
+                    for _, d in ipairs(listDrawings) do pcall(function() d:Remove() end) end
+                    listDrawings = {}
+                    for k = #handlers, #handlers - listHandlerCount + 1, -1 do
+                        if handlers[k] and handlers[k].isDropdownItem then
+                            table.remove(handlers, k)
+                        end
+                    end
+                    listHandlerCount = 0
+
+                    -- Update positions based on current WX/WY
+                    listAbsX = WX+xo+6
+                    listAbsY = WY+yo2+34
+
+                    local visCount = math.min(maxVisible, #opts)
+                    local listH = visCount * itemH
+
+                    -- Background panel
+                    local pbg = Drawing.new("Square")
+                    pbg.Filled=true; pbg.Color=T.BG2; pbg.Transparency=1
+                    pbg.ZIndex=30; pbg.Size=Vector2.new(colW-12+2, listH+2)
+                    pbg.Position=Vector2.new(listAbsX-1, listAbsY-1); pbg.Visible=true
+                    table.insert(listDrawings, pbg)
+
+                    for i = 1, visCount do
+                        local optIdx = i + scrollOffset
+                        if optIdx > #opts then break end
+                        local opt = opts[optIdx]
+                        local optVal = tostring(opt)
+                        local iy = listAbsY + (i-1)*itemH
+
                         local ibg = Drawing.new("Square")
-                        ibg.Filled = true
-                        ibg.Color = (tostring(opt)==val) and T.Act or T.BG2
-                        ibg.Transparency = 1
-                        ibg.ZIndex = 20
-                        ibg.Size = Vector2.new(colW-12, itemH)
-                        ibg.Position = Vector2.new(WX+xo+6, iy)
-                        ibg.Visible = true
+                        ibg.Filled=true
+                        ibg.Color=(optVal==val) and T.Pink or T.BG2
+                        ibg.Transparency=(optVal==val) and 0.7 or 1
+                        ibg.ZIndex=31; ibg.Size=Vector2.new(colW-12, itemH)
+                        ibg.Position=Vector2.new(listAbsX, iy); ibg.Visible=true
+
                         local itxt = Drawing.new("Text")
-                        itxt.Text = tostring(opt)
-                        itxt.Color = T.White
-                        itxt.Transparency = 1
-                        itxt.Size = 11
-                        itxt.Font = Drawing.Fonts.Gotham
-                        itxt.Outline = false
-                        itxt.ZIndex = 21
-                        itxt.Position = Vector2.new(WX+xo+9, iy+2)
-                        itxt.Visible = true
+                        itxt.Text=optVal; itxt.Color=T.White; itxt.Transparency=1
+                        itxt.Size=11; itxt.Font=Drawing.Fonts.Gotham
+                        itxt.Outline=false; itxt.ZIndex=32
+                        itxt.Position=Vector2.new(listAbsX+4, iy+2); itxt.Visible=true
+
                         table.insert(listDrawings, ibg)
                         table.insert(listDrawings, itxt)
-                        -- Register click handler for this item
-                        local optVal = tostring(opt)
-                        local ioxRel = xo+6
-                        local ioyRel = yo2+34+(i-1)*itemH
+
+                        -- Handler uses ABSOLUTE coords stored directly
+                        local capturedIdx = optIdx
+                        local capturedVal = optVal
+                        local absOx = listAbsX - WX
+                        local absOy = iy - WY
                         table.insert(handlers, {
-                            ox=ioxRel, oy=ioyRel, w=colW-12, h=itemH,
+                            ox=absOx, oy=absOy, w=colW-12, h=itemH,
                             tabIdx=idx, isDropdownItem=true,
                             fn=function()
-                                val = optVal
-                                ci = i
-                                dvtxt.Text = val
+                                val=capturedVal; ci=capturedIdx
+                                dvtxt.Text=val
                                 pcall(cb, val)
                                 closeList()
                             end
                         })
+                        listHandlerCount = listHandlerCount + 1
+                    end
+
+                    -- Scroll arrows if needed
+                    if #opts > maxVisible then
+                        if scrollOffset > 0 then
+                            local ua = Drawing.new("Text")
+                            ua.Text="^ scroll"; ua.Color=T.Dim; ua.Transparency=1
+                            ua.Size=10; ua.Font=Drawing.Fonts.Gotham; ua.Outline=false
+                            ua.ZIndex=33; ua.Position=Vector2.new(listAbsX+colW-50, listAbsY); ua.Visible=true
+                            table.insert(listDrawings, ua)
+                            table.insert(handlers, {
+                                ox=listAbsX-WX+colW-52, oy=listAbsY-WY, w=50, h=itemH,
+                                tabIdx=idx, isDropdownItem=true,
+                                fn=function() scrollOffset=math.max(0,scrollOffset-1); buildList() end
+                            })
+                            listHandlerCount = listHandlerCount + 1
+                        end
+                        if scrollOffset + maxVisible < #opts then
+                            local da = Drawing.new("Text")
+                            da.Text="v scroll"; da.Color=T.Dim; da.Transparency=1
+                            da.Size=10; da.Font=Drawing.Fonts.Gotham; da.Outline=false
+                            da.ZIndex=33; da.Position=Vector2.new(listAbsX+colW-50, listAbsY+listH-itemH); da.Visible=true
+                            table.insert(listDrawings, da)
+                            table.insert(handlers, {
+                                ox=listAbsX-WX+colW-52, oy=listAbsY-WY+listH-itemH, w=50, h=itemH,
+                                tabIdx=idx, isDropdownItem=true,
+                                fn=function() scrollOffset=math.min(#opts-maxVisible,scrollOffset+1); buildList() end
+                            })
+                            listHandlerCount = listHandlerCount + 1
+                        end
                     end
                 end
 
                 addH(xo+6, yo2+16, colW-12, 16, function()
-                    if isOpen then closeList() else openList() end
+                    if isOpen then
+                        closeList()
+                    else
+                        isOpen = true
+                        darr.Text = "^"
+                        buildList()
+                    end
                 end)
 
                 if isR then rYo=yo2+36 else lYo=yo2+36 end
