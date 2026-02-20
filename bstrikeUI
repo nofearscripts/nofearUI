@@ -1,4 +1,4 @@
--- NO.FEAR Drawing UI Library v6.0 RenderStepped architecture
+-- NO.FEAR Drawing UI Library v6.0 (RenderStepped architecture)
 -- All positions recalculated every frame from WX/WY
 -- Zero closures for positions, zero allD complexity
 
@@ -273,7 +273,7 @@ function DrawLib:CreateWindow(cfg)
                         local tw = PW-EPX*2
                         local fill = math.floor(((el.val-el.min)/(el.max-el.min))*tw)
                         el.d1.Position = Vector2.new(ex, ey+2)
-                        el.d1.Text     = el.name..": "..el.val
+                        el.d1.Text     = el.name..": "..tostring(el.val)
                         el.d2.Position = Vector2.new(ex, ey+EH-6)
                         el.d2.Size     = Vector2.new(tw,6)
                         el.d3.Position = Vector2.new(ex, ey+EH-6)
@@ -376,7 +376,7 @@ function DrawLib:CreateWindow(cfg)
                     for i,o in ipairs(e.opts) do if o==e.val then idx=i break end end
                     idx=(idx%#e.opts)+1
                     e.val=e.opts[idx]
-                    e.d3.Text=e.val
+                    e.d3.Text=tostring(e.val)
                     if e.cb then pcall(e.cb, e.val) end
                     return
                 end
