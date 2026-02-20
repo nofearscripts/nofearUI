@@ -1,4 +1,4 @@
--- NoFear Drawing UI Library v9.1111
+-- NoFear Drawing UI Library v9.2
 -- Fixed: gpe blocking clicks, slider double-handler, Transparency on tab elements, stars visibility
 
 local DrawLib = {}
@@ -62,6 +62,11 @@ function DrawLib:CreateWindow(cfg)
     local bbln  = D("Line",  {Color=T.SEP,Thickness=1,  Transparency=1,ZIndex=3,From=Vector2.new(WX,WY+WH-BBH),To=Vector2.new(WX+WW,WY+WH-BBH)})
     local bbtxt = D("Text",  {Text="discord.gg/G9QSXsB9wY",Color=T.Dim,Transparency=1,ZIndex=3,Size=11,Font=Drawing.Fonts.Gotham,Outline=false,Position=Vector2.new(WX+WW/2-80,WY+WH-BBH+5)})
     local bord  = D("Square",{Filled=false,Color=Color3.fromRGB(60,60,60),Thickness=1,Transparency=1,ZIndex=2,Size=Vector2.new(WW,WH),Position=Vector2.new(WX,WY)})
+    -- Subtle white glow: 4 layered outlines expanding outward with decreasing opacity
+    local glow1 = D("Square",{Filled=false,Color=Color3.fromRGB(255,255,255),Thickness=1,Transparency=0.18,ZIndex=1,Size=Vector2.new(WW+2,WH+2),Position=Vector2.new(WX-1,WY-1)})
+    local glow2 = D("Square",{Filled=false,Color=Color3.fromRGB(255,255,255),Thickness=1,Transparency=0.10,ZIndex=1,Size=Vector2.new(WW+4,WH+4),Position=Vector2.new(WX-2,WY-2)})
+    local glow3 = D("Square",{Filled=false,Color=Color3.fromRGB(255,255,255),Thickness=1,Transparency=0.05,ZIndex=1,Size=Vector2.new(WW+6,WH+6),Position=Vector2.new(WX-3,WY-3)})
+    local glow4 = D("Square",{Filled=false,Color=Color3.fromRGB(255,255,255),Thickness=1,Transparency=0.02,ZIndex=1,Size=Vector2.new(WW+8,WH+8),Position=Vector2.new(WX-4,WY-4)})
 
     local function reposition()
         bg.Size=Vector2.new(WW,WH);           bg.Position=Vector2.new(WX,WY)
@@ -76,6 +81,10 @@ function DrawLib:CreateWindow(cfg)
         bbln.From=Vector2.new(WX,WY+WH-BBH);   bbln.To=Vector2.new(WX+WW,WY+WH-BBH)
         bbtxt.Position=Vector2.new(WX+WW/2-80,WY+WH-BBH+5)
         bord.Size=Vector2.new(WW,WH);          bord.Position=Vector2.new(WX,WY)
+        glow1.Size=Vector2.new(WW+2,WH+2);    glow1.Position=Vector2.new(WX-1,WY-1)
+        glow2.Size=Vector2.new(WW+4,WH+4);    glow2.Position=Vector2.new(WX-2,WY-2)
+        glow3.Size=Vector2.new(WW+6,WH+6);    glow3.Position=Vector2.new(WX-3,WY-3)
+        glow4.Size=Vector2.new(WW+8,WH+8);    glow4.Position=Vector2.new(WX-4,WY-4)
         for i,tab in ipairs(tabs) do
             local ty=WY+TBH+(i-1)*34
             tab.bg.Size=Vector2.new(SBW,34);tab.bg.Position=Vector2.new(WX,ty)
