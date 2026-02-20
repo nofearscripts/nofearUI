@@ -1,5 +1,5 @@
 --// ============================================================
---// NO.FEAR UI LIBRARY v1.0 (Chiyo-style)
+--// NO.FEAR UI LIBRARY v1.0
 --// ============================================================
 -- Usage:
 --   local UI = loadstring(game:HttpGet("...NoFear_UILib.lua"))()
@@ -254,12 +254,32 @@ function UILib:CreateWindow(cfg)
 
     -- NoFear Logo (ImageLabel)
     local LogoImg = Instance.new("ImageLabel", TopBar)
-    LogoImg.Size = UDim2.new(0,24,0,24)
-    LogoImg.Position = UDim2.new(0,6,0.5,-12)
+    LogoImg.Size = UDim2.new(0,26,0,26)
+    LogoImg.Position = UDim2.new(0,6,0.5,-13)
     LogoImg.BackgroundTransparency = 1
+    LogoImg.BorderSizePixel = 0
     LogoImg.Image = cfg.LogoId or "rbxassetid://107275426922990"
+    LogoImg.ImageColor3 = Color3.fromRGB(255,255,255)
     LogoImg.ScaleType = Enum.ScaleType.Fit
     LogoImg.ZIndex = 7
+
+    -- Fallback: if image doesn't load after 2s, show "N" text instead
+    task.delay(2, function()
+        if LogoImg and LogoImg.Parent and LogoImg.ImageContent == "" or LogoImg.IsLoaded == false then
+            LogoImg.Visible = false
+            local fallbackLbl = Instance.new("TextLabel", TopBar)
+            fallbackLbl.Size = UDim2.new(0,26,0,26)
+            fallbackLbl.Position = UDim2.new(0,6,0.5,-13)
+            fallbackLbl.BackgroundColor3 = T.Pink
+            fallbackLbl.BorderSizePixel = 0
+            fallbackLbl.Text = "N"
+            fallbackLbl.TextColor3 = Color3.fromRGB(255,255,255)
+            fallbackLbl.TextSize = 14
+            fallbackLbl.Font = T.FontBlack
+            fallbackLbl.ZIndex = 7
+            Instance.new("UICorner", fallbackLbl).CornerRadius = UDim.new(0,6)
+        end
+    end)
 
     -- Title
     label(TopBar, { Text = cfg.Title or "NoFear", Color = T.Text, Size = 13, Font = T.FontBold, FrameSize = UDim2.new(0,200,1,0), Pos = UDim2.new(0,36,0,0), ZIndex = 7 })
