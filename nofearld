@@ -6,8 +6,6 @@
 --// Key System: https://nofear.up.railway.app/keysystem
 --// Discord:    https://discord.gg/G9QSXsB9wY
 --// ============================================================
-
---// ============================================================
 --// CONFIG
 --// ============================================================
 local ScriptURL  = "https://raw.githubusercontent.com/nofearscripts/strfsch/refs/heads/main/main.lua"
