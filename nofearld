@@ -2,23 +2,19 @@
 --// NO.FEAR LOADER v2.0 (Key System + CounterAPI)
 --// ============================================================
 --//
---// HOW TO USE:
---//   1. Change ScriptURL to your raw GitHub script URL
---//   2. Change ScriptName to the game name (shown in key UI)
---//   CounterNamespace is universal â€” do NOT change it
 --//
 --// Key System: https://nofear.up.railway.app/keysystem
 --// Discord:    https://discord.gg/G9QSXsB9wY
 --// ============================================================
 
 --// ============================================================
---// CONFIG â€” Edit these per script
+--// CONFIG
 --// ============================================================
 local ScriptURL  = "https://raw.githubusercontent.com/nofearscripts/strfsch/refs/heads/main/main.lua"
 local ScriptName = "NoFear"  -- Game name shown in key UI
 
 --// ============================================================
---// INTERNAL â€” Do not edit below
+--// INTERNAL
 --// ============================================================
 local CounterNamespace = "NoFear_BlockSpin"
 local CounterKey       = "executions"
@@ -47,7 +43,7 @@ task.spawn(function()
     pcall(incrementCounter)
 end)
 
--- â”€â”€ Key Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+--
 local function readSavedKey()
     local ok, data = pcall(readfile, KEY_SAVE_FILE)
     if ok and data and #data > 5 then
@@ -64,7 +60,7 @@ local function clearSavedKey()
     pcall(writefile, KEY_SAVE_FILE, "")
 end
 
--- â”€â”€ HWID â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- â”€â”€ HWID
 local function getHWID()
     -- Try executor-provided HWID functions first
     local hwid = nil
@@ -133,7 +129,7 @@ local function validateKey(key)
     return false, "Could not reach server. Check your connection."
 end
 
--- â”€â”€ Key UI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- â”€â”€ Key UI
 local function destroyExisting()
     local cg = game:GetService("CoreGui")
     pcall(function() local e = cg:FindFirstChild("NoFearKeySystem"); if e then e:Destroy() end end)
@@ -547,7 +543,7 @@ local function runWithKeyCheck(callback)
     end)
 end
 
--- â”€â”€ Load Main Script â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- Load Main Script
 runWithKeyCheck(function()
     local mainSuccess, mainScript = pcall(function()
         return game:HttpGet(ScriptURL)
