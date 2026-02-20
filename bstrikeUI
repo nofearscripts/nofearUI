@@ -1,4 +1,4 @@
--- NoFear Drawing UI Library v9.2
+-- NoFear Drawing UI Library v9.1
 -- Fixed: gpe blocking clicks, slider double-handler, Transparency on tab elements, stars visibility
 
 local DrawLib = {}
@@ -252,6 +252,42 @@ function DrawLib:CreateWindow(cfg)
     local W={}
     function W:Finalize() end
 
+    function W:Notify(text, duration)
+        duration = duration or 3
+        local vp = workspace.CurrentCamera.ViewportSize
+        local cx = vp.X / 2
+        local cy = 24
+        local nW = 340
+        local nH = 38
+
+        local nbg = Drawing.new("Square")
+        nbg.Filled = true; nbg.Color = Color3.fromRGB(18,18,18)
+        nbg.Transparency = 0.95; nbg.ZIndex = 99
+        nbg.Size = Vector2.new(nW, nH)
+        nbg.Position = Vector2.new(cx - nW/2, cy)
+        nbg.Visible = true
+
+        local nbord = Drawing.new("Square")
+        nbord.Filled = false; nbord.Color = T.Pink
+        nbord.Transparency = 1; nbord.Thickness = 1; nbord.ZIndex = 100
+        nbord.Size = Vector2.new(nW, nH)
+        nbord.Position = Vector2.new(cx - nW/2, cy)
+        nbord.Visible = true
+
+        local ntxt = Drawing.new("Text")
+        ntxt.Text = tostring(text); ntxt.Color = Color3.fromRGB(210,210,210)
+        ntxt.Transparency = 1; ntxt.Size = 13; ntxt.Font = Drawing.Fonts.Gotham
+        ntxt.Outline = false; ntxt.Center = true; ntxt.ZIndex = 101
+        ntxt.Position = Vector2.new(cx, cy + 12)
+        ntxt.Visible = true
+
+        task.delay(duration, function()
+            pcall(function() nbg:Remove() end)
+            pcall(function() nbord:Remove() end)
+            pcall(function() ntxt:Remove() end)
+        end)
+    end
+
     function W:AddTab(cfg2)
         cfg2=type(cfg2)=="table" and cfg2 or {Name=tostring(cfg2)}
         local tname=tostring(cfg2.Name or "Tab")
@@ -376,18 +412,80 @@ function DrawLib:CreateWindow(cfg)
                 local ci=1
                 for i,o in ipairs(opts) do if tostring(o)==val then ci=i;break end end
 
-                local rbg =nd("Square",{Filled=true,Color=T.BG,Transparency=1,ZIndex=4,Size=Vector2.new(colW,34),Position=Vector2.new(WX+xo,WY+yo2)})
-                local dtxt=nd("Text",{Text=dn,Color=T.Dim,Transparency=1,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=5,Position=Vector2.new(WX+xo+6,WY+yo2+4)})
-                local dbox=nd("Square",{Filled=true,Color=T.SEP,Transparency=1,ZIndex=5,Size=Vector2.new(colW-12,16),Position=Vector2.new(WX+xo+6,WY+yo2+16)})
+                local rbg  =nd("Square",{Filled=true,Color=T.BG,Transparency=1,ZIndex=4,Size=Vector2.new(colW,34),Position=Vector2.new(WX+xo,WY+yo2)})
+                local dtxt =nd("Text",{Text=dn,Color=T.Dim,Transparency=1,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=5,Position=Vector2.new(WX+xo+6,WY+yo2+4)})
+                local dbox =nd("Square",{Filled=true,Color=T.SEP,Transparency=1,ZIndex=5,Size=Vector2.new(colW-12,16),Position=Vector2.new(WX+xo+6,WY+yo2+16)})
                 local dvtxt=nd("Text",{Text=val,Color=T.White,Transparency=1,Size=11,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=6,Position=Vector2.new(WX+xo+9,WY+yo2+18)})
+                local darr =nd("Text",{Text="▼",Color=T.Dim,Transparency=1,Size=10,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=6,Position=Vector2.new(WX+xo+colW-20,WY+yo2+18)})
 
                 addEl(rbg,xo,yo2,dtxt,xo+6,yo2+4,dbox,xo+6,yo2+16,dvtxt,xo+9,yo2+18)
-                addH(xo+6,yo2+16,colW-12,16,function()
-                    ci=(ci%#opts)+1
-                    val=tostring(opts[ci] or "")
-                    dvtxt.Text=val
-                    pcall(cb,val)
+                addEl(darr,xo+colW-20,yo2+18)
+
+                -- Open/close list state
+                local isOpen = false
+                local listDrawings = {}
+
+                local function closeList()
+                    isOpen = false
+                    darr.Text = "▼"
+                    for _, d in ipairs(listDrawings) do pcall(function() d:Remove() end) end
+                    listDrawings = {}
+                    -- Remove list handlers
+                    for i = #handlers, 1, -1 do
+                        if handlers[i].isDropdownItem then
+                            table.remove(handlers, i)
+                        end
+                    end
+                end
+
+                local function openList()
+                    isOpen = true
+                    darr.Text = "▲"
+                    local itemH = 16
+                    for i, opt in ipairs(opts) do
+                        local iy = WY + yo2 + 34 + (i-1)*itemH
+                        local ibg = Drawing.new("Square")
+                        ibg.Filled = true
+                        ibg.Color = (tostring(opt)==val) and T.Act or T.BG2
+                        ibg.Transparency = 1
+                        ibg.ZIndex = 20
+                        ibg.Size = Vector2.new(colW-12, itemH)
+                        ibg.Position = Vector2.new(WX+xo+6, iy)
+                        ibg.Visible = true
+                        local itxt = Drawing.new("Text")
+                        itxt.Text = tostring(opt)
+                        itxt.Color = T.White
+                        itxt.Transparency = 1
+                        itxt.Size = 11
+                        itxt.Font = Drawing.Fonts.Gotham
+                        itxt.Outline = false
+                        itxt.ZIndex = 21
+                        itxt.Position = Vector2.new(WX+xo+9, iy+2)
+                        itxt.Visible = true
+                        table.insert(listDrawings, ibg)
+                        table.insert(listDrawings, itxt)
+                        -- Register click handler for this item
+                        local optVal = tostring(opt)
+                        local ioxRel = xo+6
+                        local ioyRel = yo2+34+(i-1)*itemH
+                        table.insert(handlers, {
+                            ox=ioxRel, oy=ioyRel, w=colW-12, h=itemH,
+                            tabIdx=idx, isDropdownItem=true,
+                            fn=function()
+                                val = optVal
+                                ci = i
+                                dvtxt.Text = val
+                                pcall(cb, val)
+                                closeList()
+                            end
+                        })
+                    end
+                end
+
+                addH(xo+6, yo2+16, colW-12, 16, function()
+                    if isOpen then closeList() else openList() end
                 end)
+
                 if isR then rYo=yo2+36 else lYo=yo2+36 end
             end
 
