@@ -1,4 +1,4 @@
-﻿--// ============================================================
+--// ============================================================
 --// NO.FEAR LOADER v2.0 (Key System + CounterAPI)
 --// ============================================================
 --//
@@ -8,13 +8,17 @@
 --// ============================================================
 
 --// ============================================================
---// CONFIG
+--// CONFIG — Overrideable by calling script via getfenv()
 --// ============================================================
-local ScriptURL  = "https://raw.githubusercontent.com/nofearscripts/strfsch/refs/heads/main/main.lua"
-local ScriptName = "NoFear"  -- Game name shown in key UI
+-- Per-game loaders set these before calling loadstring(loader)():
+--   getfenv().ScriptURL  = "https://raw.github.com/.../main.lua"
+--   getfenv().ScriptName = "Rivals"
+local _env = (getfenv and getfenv(0)) or {}
+local ScriptURL  = _env.ScriptURL  or ""
+local ScriptName = _env.ScriptName or "NoFear"
 
 --// ============================================================
---// INTERNAL â€” Do not edit below
+--// INTERNAL
 --// ============================================================
 local CounterNamespace = "NoFear_BlockSpin"
 local CounterKey       = "executions"
@@ -543,9 +547,18 @@ local function runWithKeyCheck(callback)
     end)
 end
 
--- Load Main Script
-runWithKeyCheck(function()
-    local mainSuccess, mainScript = pcall(function()
-        return game:HttpGet(ScriptURL)
+-- ── Standalone vs Module mode ─────────────────────────────────────────────────
+if ScriptURL and #ScriptURL > 10 then
+    -- Standalone mode: key check then load the script
+    runWithKeyCheck(function()
+        local ok, src = pcall(game.HttpGet, game, ScriptURL)
+        if ok and src then
+            loadstring(src)()
+        else
+            warn("[NoFear] Failed to load script from GitHub. Check ScriptURL.")
+        end
     end)
-end)
+else
+    -- Module mode: return runWithKeyCheck so the calling script can use it
+    return runWithKeyCheck
+end
