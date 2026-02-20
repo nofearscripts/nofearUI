@@ -1,5 +1,5 @@
 --// ============================================================
---// NO.FEAR UI LIBRARY v1.0
+--// NO.FEAR UI LIBRARY v1.0 (Chiyo-style)
 --// ============================================================
 -- Usage:
 --   local UI = loadstring(game:HttpGet("...NoFear_UILib.lua"))()
@@ -296,10 +296,12 @@ function UILib:CreateWindow(cfg)
             activeTab = Tab
         end
 
-        iconBtn.MouseButton1Click:Connect(activate)
+        -- Store references BEFORE activate is called
         Tab.leftScroll = leftScroll
         Tab.rightScroll = rightScroll
         Tab.iconBtn = iconBtn
+
+        iconBtn.MouseButton1Click:Connect(activate)
 
         -- AddSection
         function Tab:AddSection(name, side)
@@ -491,11 +493,20 @@ function UILib:CreateWindow(cfg)
             return Sec
         end
 
-        -- Activate first tab by default
-        if #tabs == 0 then activate() end
+        -- Insert tab FIRST, then activate if it's the first one
         table.insert(tabs, Tab)
+        if #tabs == 1 then activate() end
         return Tab
     end
+
+    -- ToggleKey support (K to show/hide)
+    UserInputService.InputBegan:Connect(function(input, gpe)
+        if gpe then return end
+        local key = cfg.ToggleKey or Enum.KeyCode.K
+        if input.KeyCode == key then
+            Main.Visible = not Main.Visible
+        end
+    end)
 
     return W
 end
