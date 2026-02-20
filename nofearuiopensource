@@ -168,9 +168,48 @@ function UILib:CreateWindow(cfg)
     Main.ZIndex = 2
     Main.ClipsDescendants = false
     Main.Parent = Gui
+    makecorner(Main, 6)
+
+    -- Subtle white glow around the UI
+    local Glow = Instance.new("ImageLabel", Main)
+    Glow.Size = UDim2.new(1,40,1,40)
+    Glow.Position = UDim2.new(0,-20,0,-20)
+    Glow.BackgroundTransparency = 1
+    Glow.Image = "rbxassetid://5028857084" -- radial glow image
+    Glow.ImageColor3 = Color3.fromRGB(255,255,255)
+    Glow.ImageTransparency = 0.82
+    Glow.ZIndex = 1
+    Glow.ScaleType = Enum.ScaleType.Stretch
+
+    -- Falling white stars
+    task.spawn(function()
+        local starChars = {"✦","·","⋆","✧","*","•"}
+        while Gui and Gui.Parent do
+            local star = Instance.new("TextLabel", Gui)
+            star.BackgroundTransparency = 1
+            star.Text = starChars[math.random(1,#starChars)]
+            star.TextColor3 = Color3.fromRGB(255,255,255)
+            star.TextTransparency = math.random(30,70)/100
+            star.TextSize = math.random(8,18)
+            star.Font = Enum.Font.GothamBold
+            star.Size = UDim2.new(0,20,0,20)
+            star.Position = UDim2.new(math.random(0,100)/100, 0, -0.02, 0)
+            star.ZIndex = 1
+            star.Name = "Star"
+
+            -- Tween fall
+            local fallTime = math.random(35,80)/10
+            local tween = game:GetService("TweenService"):Create(star,
+                TweenInfo.new(fallTime, Enum.EasingStyle.Linear),
+                { Position = UDim2.new(star.Position.X.Scale, 0, 1.05, 0), TextTransparency = 1 }
+            )
+            tween:Play()
+            tween.Completed:Connect(function() star:Destroy() end)
+            task.wait(math.random(3,8)/10)
+        end
+    end)
     print("[NoFear UILib] Window created, parented to:", Gui.Parent)
-    makecorner(Main, 0)
-    makestroke(Main, T.Divider, 1)
+    makestroke(Main, Color3.fromRGB(255,255,255), 1, 0.85)
 
     -- Top bar (32px)
     local TopBar = frame(Main, { Color = T.TopBar, Size = UDim2.new(1,0,0,32), ZIndex = 6 })
