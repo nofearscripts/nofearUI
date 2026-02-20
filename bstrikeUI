@@ -1,4 +1,4 @@
--- NO.FEAR Drawing UI Library v6.0 (RenderStepped architecture
+-- NO.FEAR Drawing UI Library v6.0 (RenderStepped architecture)
 -- All positions recalculated every frame from WX/WY
 -- Zero closures for positions, zero allD complexity
 
@@ -196,9 +196,22 @@ function DrawLib:CreateWindow(cfg)
             S.y = my - S.dragOY
         end
 
-        -- Hide all if not visible
-        if not S.visible then
-            for _,d in ipairs(draws) do pcall(function() d.Visible=false end) end
+        -- Show/hide all drawings based on visibility
+        local vis = S.visible
+        dBG.Visible=vis; dSB.Visible=vis; dTB.Visible=vis; dBB.Visible=vis
+        dLogo.Visible=vis; dTitle.Visible=vis; dSub.Visible=vis; dBotTx.Visible=vis
+        dSBDiv.Visible=vis; dPDiv.Visible=vis
+        if not vis then
+            for _,td in ipairs(tabDraws) do td.bg.Visible=false; td.acc.Visible=false; td.txt.Visible=false end
+            for tabIdx,tab in ipairs(S.tabs) do
+                for _,sec in ipairs(tab.secs) do
+                    for _,el in ipairs(sec.elems) do
+                        if el.d1 then el.d1.Visible=false end
+                        if el.d2 then el.d2.Visible=false end
+                        if el.d3 then el.d3.Visible=false end
+                    end
+                end
+            end
             for _,st in ipairs(stars) do st.s1.Visible=false; st.s2.Visible=false end
             return
         end
