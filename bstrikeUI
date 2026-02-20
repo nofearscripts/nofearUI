@@ -1,4 +1,4 @@
--- NoFear Drawing UI Library v9.3
+-- NoFear Drawing UI Library v9.1
 -- Fixed: gpe blocking clicks, slider double-handler, Transparency on tab elements, stars visibility
 
 local DrawLib = {}
@@ -28,8 +28,8 @@ function DrawLib:CreateWindow(cfg)
     local title     = tostring(cfg.Title or "NoFear")
     local gameName  = tostring(cfg.Game or "")
     local toggleKey = cfg.ToggleKey or Enum.KeyCode.K
-    local WX,WY     = 200,150
-    local WW,WH     = 700,500
+    local WX,WY     = 200,100
+    local WW,WH     = 720,560
     local SBW       = 130
     local TBH       = 32
     local BBH       = 22
@@ -53,11 +53,6 @@ function DrawLib:CreateWindow(cfg)
         openDropdown = nil
         for _, d in ipairs(dropListDraws) do pcall(function() d:Remove() end) end
         dropListDraws = {}
-        for _, h in ipairs(dropHandlers) do
-            for k = #handlers, 1, -1 do
-                if handlers[k] == h then table.remove(handlers, k); break end
-            end
-        end
         dropHandlers = {}
     end
 
@@ -110,10 +105,12 @@ function DrawLib:CreateWindow(cfg)
             tab.txt.Position=Vector2.new(WX+14,ty+10)
             if tab.sep then tab.sep.From=Vector2.new(WX,ty);tab.sep.To=Vector2.new(WX+SBW,ty) end
             local sc = tabScrollY[i] or 0
+            local contentTop = WY+TBH
+            local contentBot = WY+WH-BBH
             for _,e in ipairs(tab.els) do
                 local ey = WY+e.oy-sc
                 -- Hide elements scrolled out of the content area
-                local inView = ey >= WY+TBH-2 and ey <= WY+WH-BBH+2
+                local inView = ey >= contentTop and ey+20 <= contentBot
                 local act2 = (i==activeTab)
                 pcall(function() e.d.Visible = act2 and inView end)
                 if e.isLine then
@@ -123,19 +120,19 @@ function DrawLib:CreateWindow(cfg)
                 end
                 if e.d2 then
                     local ey2=WY+e.oy2-sc
-                    pcall(function() e.d2.Visible = act2 and (ey2 >= WY+TBH-2 and ey2 <= WY+WH-BBH+2) end)
+                    pcall(function() e.d2.Visible = act2 and (ey2 >= contentTop and ey2+20 <= contentBot) end)
                     if e.d2isLine then
                         e.d2.From=Vector2.new(WX+e.ox2,ey2);e.d2.To=Vector2.new(WX+e.ox2+e.lw2,ey2)
                     else e.d2.Position=Vector2.new(WX+e.ox2,ey2) end
                 end
                 if e.d3 then
                     local ey3=WY+e.oy3-sc
-                    pcall(function() e.d3.Visible = act2 and (ey3 >= WY+TBH-2 and ey3 <= WY+WH-BBH+2) end)
+                    pcall(function() e.d3.Visible = act2 and (ey3 >= contentTop and ey3+20 <= contentBot) end)
                     e.d3.Position=Vector2.new(WX+e.ox3,ey3)
                 end
                 if e.d4 then
                     local ey4=WY+e.oy4-sc
-                    pcall(function() e.d4.Visible = act2 and (ey4 >= WY+TBH-2 and ey4 <= WY+WH-BBH+2) end)
+                    pcall(function() e.d4.Visible = act2 and (ey4 >= contentTop and ey4+20 <= contentBot) end)
                     e.d4.Position=Vector2.new(WX+e.ox4,ey4)
                 end
             end
@@ -146,18 +143,7 @@ function DrawLib:CreateWindow(cfg)
         closeOpenDropdown()
         visible=v
         for _,d in ipairs(allD) do pcall(function() d.Visible=v end) end
-        if v then
-            for i,tab in ipairs(tabs) do
-                local act=(i==activeTab)
-                for _,e in ipairs(tab.els) do
-                    pcall(function() e.d.Visible=act end)
-                    if e.d2 then pcall(function() e.d2.Visible=act end) end
-                    if e.d3 then pcall(function() e.d3.Visible=act end) end
-                    if e.d4 then pcall(function() e.d4.Visible=act end) end
-                end
-                tab.acc.Visible=act
-            end
-        end
+        if v then reposition() end
     end
 
     local function activateTab(i)
@@ -167,13 +153,8 @@ function DrawLib:CreateWindow(cfg)
             tab.bg.Color=act and T.Act or T.SB
             tab.acc.Visible=act
             tab.txt.Color=act and T.Pink or T.Dim
-            for _,e in ipairs(tab.els) do
-                pcall(function() e.d.Visible=act end)
-                if e.d2 then pcall(function() e.d2.Visible=act end) end
-                if e.d3 then pcall(function() e.d3.Visible=act end) end
-                if e.d4 then pcall(function() e.d4.Visible=act end) end
-            end
         end
+        reposition()
     end
 
     -- Stars
@@ -282,14 +263,13 @@ function DrawLib:CreateWindow(cfg)
             end
         end
 
-        -- Check dropdown item handlers FIRST (they are absolute, above everything)
+        -- Check dropdown item handlers FIRST (absolute screen coords, not offset-based)
         if openDropdown ~= nil then
             local hitDropItem = false
             for _, h in ipairs(dropHandlers) do
                 if h.tabIdx == activeTab then
-                    local ax = WX + h.ox
-                    local ay = WY + h.oy
-                    if mx >= ax and mx <= ax + h.w and my >= ay and my <= ay + h.h then
+                    -- drop handlers store absolute screen positions in ax/ay
+                    if mx >= h.ax and mx <= h.ax + h.w and my >= h.ay and my <= h.ay + h.h then
                         pcall(h.fn)
                         hitDropItem = true
                         return
@@ -397,11 +377,13 @@ function DrawLib:CreateWindow(cfg)
             if d2 then table.insert(allD,d2) end
             if d3 then table.insert(allD,d3) end
             if d4 then table.insert(allD,d4) end
-            local act=(idx==activeTab)
-            pcall(function()d.Visible=act end)
-            if d2 then pcall(function()d2.Visible=act end) end
-            if d3 then pcall(function()d3.Visible=act end) end
-            if d4 then pcall(function()d4.Visible=act end) end
+            -- Start hidden; reposition() will show/clip correctly
+            pcall(function()d.Visible=false end)
+            if d2 then pcall(function()d2.Visible=false end) end
+            if d3 then pcall(function()d3.Visible=false end) end
+            if d4 then pcall(function()d4.Visible=false end) end
+            -- Trigger reposition so this element gets placed and shown correctly
+            reposition()
         end
 
         local function addH(ox,oy,w,h,fn)
@@ -562,11 +544,11 @@ function DrawLib:CreateWindow(cfg)
                             itxt.Position=Vector2.new(lx+4, iy+2); itxt.Visible=true
                             table.insert(dropListDraws, itxt)
 
-                            -- Handler: absolute position, computed fresh each build
+                            -- Handler uses absolute ax/ay so drag doesn't break positions
                             local capturedVal = optVal
                             local capturedIdx = optIdx
                             local h = {
-                                ox = lx - WX, oy = iy - WY,
+                                ax = lx, ay = iy,
                                 w = lw, h = itemH,
                                 tabIdx = idx,
                                 fn = function()
@@ -576,7 +558,6 @@ function DrawLib:CreateWindow(cfg)
                                     closeOpenDropdown()
                                 end
                             }
-                            table.insert(handlers, h)
                             table.insert(dropHandlers, h)
                         end
 
@@ -587,19 +568,14 @@ function DrawLib:CreateWindow(cfg)
                             ua.Size=10; ua.Font=Drawing.Fonts.Gotham; ua.Outline=false
                             ua.ZIndex=53; ua.Position=Vector2.new(lx+lw-14, ly+2); ua.Visible=true
                             table.insert(dropListDraws, ua)
-                            local h={ox=lx-WX+lw-16, oy=ly-WY, w=16, h=itemH, tabIdx=idx,
+                            local h={ax=lx+lw-16, ay=ly, w=16, h=itemH, tabIdx=idx,
                                 fn=function()
                                     scrollOffset=math.max(0,scrollOffset-1)
-                                    -- rebuild
                                     for _,d in ipairs(dropListDraws) do pcall(function()d:Remove()end) end
-                                    dropListDraws={}
-                                    for _,dh in ipairs(dropHandlers) do
-                                        for k=#handlers,1,-1 do if handlers[k]==dh then table.remove(handlers,k);break end end
-                                    end
-                                    dropHandlers={}
+                                    dropListDraws={}; dropHandlers={}
                                     buildList()
                                 end}
-                            table.insert(handlers,h); table.insert(dropHandlers,h)
+                            table.insert(dropHandlers,h)
                         end
 
                         -- Scroll down arrow
@@ -610,18 +586,14 @@ function DrawLib:CreateWindow(cfg)
                             da.ZIndex=53
                             da.Position=Vector2.new(lx+lw-14, ly+(math.min(maxVisible,#opts)-1)*itemH+2); da.Visible=true
                             table.insert(dropListDraws, da)
-                            local h={ox=lx-WX+lw-16, oy=ly-WY+(math.min(maxVisible,#opts)-1)*itemH, w=16, h=itemH, tabIdx=idx,
+                            local h={ax=lx+lw-16, ay=ly+(math.min(maxVisible,#opts)-1)*itemH, w=16, h=itemH, tabIdx=idx,
                                 fn=function()
                                     scrollOffset=math.min(#opts-maxVisible,scrollOffset+1)
                                     for _,d in ipairs(dropListDraws) do pcall(function()d:Remove()end) end
-                                    dropListDraws={}
-                                    for _,dh in ipairs(dropHandlers) do
-                                        for k=#handlers,1,-1 do if handlers[k]==dh then table.remove(handlers,k);break end end
-                                    end
-                                    dropHandlers={}
+                                    dropListDraws={}; dropHandlers={}
                                     buildList()
                                 end}
-                            table.insert(handlers,h); table.insert(dropHandlers,h)
+                            table.insert(dropHandlers,h)
                         end
                     end
 
