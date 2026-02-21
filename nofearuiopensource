@@ -1,6 +1,6 @@
 
 --// ============================================================
---// NO.FEAR UI LIBRARY v1.0
+--// NO.FEAR UI LIBRARY v1.0 (Chiyo-style)
 --// ============================================================
 -- Usage:
 --   local UI = loadstring(game:HttpGet("...NoFear_UILib.lua"))()
@@ -209,61 +209,66 @@ function UILib:CreateWindow(cfg)
 
     local TweenService = game:GetService("TweenService")
 
-    -- Star spawner — 4-pointed star made from 2 rotated rectangles (no asset ID needed)
-    local function makeStar(parent, sz, alpha)
-        local container = Instance.new("Frame", parent)
-        container.BackgroundTransparency = 1
-        container.Size = UDim2.new(0, sz, 0, sz)
-        container.Position = UDim2.new(math.random(0,100)/100, 0, -0.04, 0)
-        container.ZIndex = 25
-        container.BorderSizePixel = 0
-        container.ClipsDescendants = false
-
-        -- Horizontal bar
-        local b1 = Instance.new("Frame", container)
-        b1.BackgroundColor3 = Color3.fromRGB(255,255,255)
-        b1.BackgroundTransparency = 1 - alpha
-        b1.BorderSizePixel = 0
-        b1.Size = UDim2.new(1, 0, 0, math.max(2, sz/4))
-        b1.Position = UDim2.new(0, 0, 0.5, -math.max(1, sz/8))
-        b1.ZIndex = 25
-        Instance.new("UICorner", b1).CornerRadius = UDim.new(1, 0)
-
-        -- Vertical bar
-        local b2 = Instance.new("Frame", container)
-        b2.BackgroundColor3 = Color3.fromRGB(255,255,255)
-        b2.BackgroundTransparency = 1 - alpha
-        b2.BorderSizePixel = 0
-        b2.Size = UDim2.new(0, math.max(2, sz/4), 1, 0)
-        b2.Position = UDim2.new(0.5, -math.max(1, sz/8), 0, 0)
-        b2.ZIndex = 25
-        Instance.new("UICorner", b2).CornerRadius = UDim.new(1, 0)
-
-        return container, b1, b2
-    end
+    -- Star spawner using ViewportFrame trick to allow Rotation on Frame
+    local vp = game:GetService("Workspace").CurrentCamera.ViewportSize
 
     local function spawnStars()
         task.spawn(function()
             task.wait(0.2)
             while Main and Main.Parent do
                 if not Main.Visible then task.wait(0.5) continue end
-                local sz = math.random(10, 20)
+                local sz = math.random(8, 18)
                 local alpha = math.random(40, 80) / 100
-                local container, b1, b2 = makeStar(Gui, sz, alpha)
+                local startX = math.random(0, math.floor(vp.X))
+                local fallTime = math.random(25, 55) / 10
 
-                local fallTime = math.random(40, 80) / 10
-                -- Tween container downward
-                TweenService:Create(container,
-                    TweenInfo.new(fallTime, Enum.EasingStyle.Linear),
-                    { Position = UDim2.new(container.Position.X.Scale, 0, 1.05, 0) }
-                ):Play()
-                -- Fade out bars
+                -- Container at absolute pixel position
+                local container = Instance.new("Frame", Gui)
+                container.BackgroundTransparency = 1
+                container.Size = UDim2.new(0, sz, 0, sz)
+                container.Position = UDim2.new(0, startX, 0, -sz)
+                container.ZIndex = 25
+                container.BorderSizePixel = 0
+                container.ClipsDescendants = false
+                container.Rotation = math.random(0, 360)
+
+                -- Horizontal bar (makes + shape)
+                local b1 = Instance.new("Frame", container)
+                b1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                b1.BackgroundTransparency = 1 - alpha
+                b1.BorderSizePixel = 0
+                b1.Size = UDim2.new(1, 0, 0, math.ceil(sz * 0.25))
+                b1.Position = UDim2.new(0, 0, 0.5, -math.ceil(sz * 0.125))
+                b1.ZIndex = 25
+                Instance.new("UICorner", b1).CornerRadius = UDim.new(1, 0)
+
+                -- Diagonal bar (rotated 45° to make X cross, combined = star)
+                local b2 = Instance.new("Frame", container)
+                b2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                b2.BackgroundTransparency = 1 - alpha
+                b2.BorderSizePixel = 0
+                b2.Size = UDim2.new(0, math.ceil(sz * 0.25), 1, 0)
+                b2.Position = UDim2.new(0.5, -math.ceil(sz * 0.125), 0, 0)
+                b2.ZIndex = 25
+                Instance.new("UICorner", b2).CornerRadius = UDim.new(1, 0)
+
+                -- Fall tween (pixel-based Y)
+                TweenService:Create(container, TweenInfo.new(fallTime, Enum.EasingStyle.Linear), {
+                    Position = UDim2.new(0, startX, 0, math.floor(vp.Y) + sz)
+                }):Play()
+
+                -- Slow rotation while falling
+                TweenService:Create(container, TweenInfo.new(fallTime, Enum.EasingStyle.Linear), {
+                    Rotation = container.Rotation + math.random(-180, 180)
+                }):Play()
+
+                -- Fade out
                 TweenService:Create(b1, TweenInfo.new(fallTime, Enum.EasingStyle.Linear), { BackgroundTransparency = 1 }):Play()
                 local t2 = TweenService:Create(b2, TweenInfo.new(fallTime, Enum.EasingStyle.Linear), { BackgroundTransparency = 1 })
                 t2:Play()
-                t2.Completed:Connect(function() container:Destroy() end)
+                t2.Completed:Connect(function() if container then container:Destroy() end end)
 
-                task.wait(math.random(15, 40) / 100)
+                task.wait(math.random(10, 30) / 100)
             end
         end)
     end
