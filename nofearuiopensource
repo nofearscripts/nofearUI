@@ -1,6 +1,6 @@
 
 --// ============================================================
---// NO.FEAR UI LIBRARY v1.0ss
+--// NO.FEAR UI LIBRARY v1.0
 --// ============================================================
 -- Usage:
 --   local UI = loadstring(game:HttpGet("...NoFear_UILib.lua"))()
@@ -211,7 +211,9 @@ function UILib:CreateWindow(cfg)
     -- Star spawner function — restarts every time UI is shown
     local function spawnStars()
         task.spawn(function()
-            while Main and Main.Parent and Main.Visible do
+            task.wait(0.1) -- wait for first render so Visible is accurate
+            while Main and Main.Parent do
+                if not Main.Visible then task.wait(0.5) continue end
                 -- Real 4-pointed star: ImageLabel with star asset
                 local sz = math.random(8, 16)
                 local alpha = math.random(30, 65) / 100
