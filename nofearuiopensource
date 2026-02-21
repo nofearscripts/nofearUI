@@ -1,3 +1,4 @@
+
 --// ============================================================
 --// NO.FEAR UI LIBRARY v1.0 (Chiyo-style)
 --// ============================================================
@@ -41,7 +42,7 @@ local T = {
     ToggleOn    = Color3.fromRGB(255, 107, 157), -- toggle on bg
     SliderBG    = Color3.fromRGB(45, 45, 45),    -- slider track
     DropBG      = Color3.fromRGB(32, 32, 32),    -- dropdown bg
-    Font        = Enum.Font.Code,
+    Font        = Enum.Font.Gotham,
     FontBold    = Enum.Font.GothamBold,
     FontBlack   = Enum.Font.GothamBlack,
 }
@@ -170,16 +171,8 @@ function UILib:CreateWindow(cfg)
     Main.Parent = Gui
     makecorner(Main, 6)
 
-    -- White glow — sits just outside the UI edges
-    local Glow = Instance.new("ImageLabel", Main)
-    Glow.Size = UDim2.new(1,80,1,80)
-    Glow.Position = UDim2.new(0,-40,0,-40)
-    Glow.BackgroundTransparency = 1
-    Glow.Image = "rbxassetid://1316045217" -- square soft glow, no vertical streaks
-    Glow.ImageColor3 = Color3.fromRGB(255,255,255)
-    Glow.ImageTransparency = 0.7
-    Glow.ZIndex = 0
-    Glow.ScaleType = Enum.ScaleType.Stretch
+    -- Subtle border glow (single UIStroke, 0.9 transparency)
+    makestroke(Main, Color3.fromRGB(255, 255, 255), 1, 0.9)
 
     local TweenService = game:GetService("TweenService")
 
@@ -238,15 +231,10 @@ function UILib:CreateWindow(cfg)
     -- Start stars immediately
     spawnStars()
 
-    -- Restart stars + toggle glow when UI visibility changes
+    -- Restart stars when UI is shown
     Main:GetPropertyChangedSignal("Visible"):Connect(function()
-        Glow.Visible = Main.Visible
-        if Main.Visible then
-            spawnStars()
-        end
+        if Main.Visible then spawnStars() end
     end)
-    print("[NoFear UILib] Window created, parented to:", Gui.Parent)
-    makestroke(Main, Color3.fromRGB(255,255,255), 1, 0.85)
 
     -- Top bar (32px)
     local TopBar = frame(Main, { Color = T.TopBar, Size = UDim2.new(1,0,0,32), ZIndex = 6 })
