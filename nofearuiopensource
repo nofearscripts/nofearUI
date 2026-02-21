@@ -1,6 +1,6 @@
 
 --// ============================================================
---// NO.FEAR UI LIBRARY v1.0
+--// NO.FEAR UI LIBRARY v1.0ss
 --// ============================================================
 -- Usage:
 --   local UI = loadstring(game:HttpGet("...NoFear_UILib.lua"))()
@@ -171,12 +171,40 @@ function UILib:CreateWindow(cfg)
     Main.Parent = Gui
     makecorner(Main, 6)
 
-    -- Subtle border glow (UIStroke outside the frame)
-    local borderStroke = Instance.new("UIStroke", Main)
-    borderStroke.Color = Color3.fromRGB(255, 255, 255)
-    borderStroke.Thickness = 1
-    borderStroke.Transparency = 0.9
-    borderStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    -- Layered border glow — 3 strokes at increasing thickness + transparency
+    local g1 = Instance.new("UIStroke", Main)
+    g1.Color = Color3.fromRGB(255,255,255); g1.Thickness = 2; g1.Transparency = 0.55; g1.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+    local glowFrame2 = Instance.new("Frame", Gui)
+    glowFrame2.BackgroundTransparency = 1
+    glowFrame2.Size = UDim2.new(0,708,0,528)
+    glowFrame2.Position = UDim2.new(0.5,-354,0.5,-264)
+    glowFrame2.ZIndex = 1
+    glowFrame2.BorderSizePixel = 0
+    Instance.new("UICorner",glowFrame2).CornerRadius = UDim.new(0,8)
+    local g2 = Instance.new("UIStroke", glowFrame2)
+    g2.Color = Color3.fromRGB(255,255,255); g2.Thickness = 4; g2.Transparency = 0.75; g2.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+    local glowFrame3 = Instance.new("Frame", Gui)
+    glowFrame3.BackgroundTransparency = 1
+    glowFrame3.Size = UDim2.new(0,718,0,538)
+    glowFrame3.Position = UDim2.new(0.5,-359,0.5,-269)
+    glowFrame3.ZIndex = 1
+    glowFrame3.BorderSizePixel = 0
+    Instance.new("UICorner",glowFrame3).CornerRadius = UDim.new(0,10)
+    local g3 = Instance.new("UIStroke", glowFrame3)
+    g3.Color = Color3.fromRGB(255,255,255); g3.Thickness = 6; g3.Transparency = 0.88; g3.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+    -- Keep glow frames in sync when UI is dragged
+    Main:GetPropertyChangedSignal("Position"):Connect(function()
+        local p = Main.Position
+        glowFrame2.Position = UDim2.new(p.X.Scale, p.X.Offset-4, p.Y.Scale, p.Y.Offset-4)
+        glowFrame3.Position = UDim2.new(p.X.Scale, p.X.Offset-9, p.Y.Scale, p.Y.Offset-9)
+    end)
+    Main:GetPropertyChangedSignal("Visible"):Connect(function()
+        glowFrame2.Visible = Main.Visible
+        glowFrame3.Visible = Main.Visible
+    end)
 
     local TweenService = game:GetService("TweenService")
 
@@ -193,7 +221,7 @@ function UILib:CreateWindow(cfg)
                 star.Size = UDim2.new(0, sz, 0, sz)
                 star.Position = UDim2.new(math.random(0,100)/100, 0, -0.04, 0)
                 star.ZIndex = 1
-                star.Image = "rbxassetid://6034684950" -- white 4-pointed star
+                star.Image = "rbxassetid://4488858550" -- white 4-pointed star sparkle
                 star.ImageColor3 = Color3.fromRGB(255, 255, 255)
                 star.ImageTransparency = alpha
                 star.ScaleType = Enum.ScaleType.Fit
