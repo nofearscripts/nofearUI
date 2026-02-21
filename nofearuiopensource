@@ -1,6 +1,6 @@
 
 --// ============================================================
---// NO.FEAR UI LIBRARY v1.0 (Chiyo-style)
+--// NO.FEAR UI LIBRARY v1.0
 --// ============================================================
 -- Usage:
 --   local UI = loadstring(game:HttpGet("...NoFear_UILib.lua"))()
@@ -42,7 +42,7 @@ local T = {
     ToggleOn    = Color3.fromRGB(255, 107, 157), -- toggle on bg
     SliderBG    = Color3.fromRGB(45, 45, 45),    -- slider track
     DropBG      = Color3.fromRGB(32, 32, 32),    -- dropdown bg
-    Font        = Enum.Font.Gotham,
+    Font        = Enum.Font.GothamSemibold,
     FontBold    = Enum.Font.GothamBold,
     FontBlack   = Enum.Font.GothamBlack,
 }
@@ -171,8 +171,12 @@ function UILib:CreateWindow(cfg)
     Main.Parent = Gui
     makecorner(Main, 6)
 
-    -- Subtle border glow (single UIStroke, 0.9 transparency)
-    makestroke(Main, Color3.fromRGB(255, 255, 255), 1, 0.9)
+    -- Subtle border glow (UIStroke outside the frame)
+    local borderStroke = Instance.new("UIStroke", Main)
+    borderStroke.Color = Color3.fromRGB(255, 255, 255)
+    borderStroke.Thickness = 1
+    borderStroke.Transparency = 0.9
+    borderStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
     local TweenService = game:GetService("TweenService")
 
@@ -180,50 +184,28 @@ function UILib:CreateWindow(cfg)
     local function spawnStars()
         task.spawn(function()
             while Main and Main.Parent and Main.Visible do
-                -- Make a 4-pointed star using two overlapping rotated rectangles
-                local starContainer = Instance.new("Frame", Gui)
-                starContainer.BackgroundTransparency = 1
-                local sz = math.random(6,14)
-                starContainer.Size = UDim2.new(0,sz,0,sz)
-                starContainer.Position = UDim2.new(math.random(0,100)/100, 0, -0.03, 0)
-                starContainer.ZIndex = 1
-                starContainer.ClipsDescendants = false
+                -- Real 4-pointed star: ImageLabel with star asset
+                local sz = math.random(8, 16)
+                local alpha = math.random(30, 65) / 100
 
-                local alpha = math.random(30,70)/100
+                local star = Instance.new("ImageLabel", Gui)
+                star.BackgroundTransparency = 1
+                star.Size = UDim2.new(0, sz, 0, sz)
+                star.Position = UDim2.new(math.random(0,100)/100, 0, -0.04, 0)
+                star.ZIndex = 1
+                star.Image = "rbxassetid://6034684950" -- white 4-pointed star
+                star.ImageColor3 = Color3.fromRGB(255, 255, 255)
+                star.ImageTransparency = alpha
+                star.ScaleType = Enum.ScaleType.Fit
 
-                -- Horizontal bar
-                local bar1 = Instance.new("Frame", starContainer)
-                bar1.BackgroundColor3 = Color3.fromRGB(255,255,255)
-                bar1.BorderSizePixel = 0
-                bar1.BackgroundTransparency = alpha
-                bar1.Size = UDim2.new(1,0,0.3,0)
-                bar1.Position = UDim2.new(0,0,0.35,0)
-                bar1.ZIndex = 1
-                makecorner(bar1, 2)
-
-                -- Vertical bar
-                local bar2 = Instance.new("Frame", starContainer)
-                bar2.BackgroundColor3 = Color3.fromRGB(255,255,255)
-                bar2.BorderSizePixel = 0
-                bar2.BackgroundTransparency = alpha
-                bar2.Size = UDim2.new(0.3,0,1,0)
-                bar2.Position = UDim2.new(0.35,0,0,0)
-                bar2.ZIndex = 1
-                makecorner(bar2, 2)
-
-                local fallTime = math.random(40,90)/10
-                local tween = TweenService:Create(starContainer,
+                local fallTime = math.random(50, 100) / 10
+                local tween = TweenService:Create(star,
                     TweenInfo.new(fallTime, Enum.EasingStyle.Linear),
-                    { Position = UDim2.new(starContainer.Position.X.Scale, 0, 1.05, 0) }
+                    { Position = UDim2.new(star.Position.X.Scale, 0, 1.05, 0), ImageTransparency = 1 }
                 )
-                -- Fade out near the end
-                local fadeTween = TweenService:Create(bar1,
-                    TweenInfo.new(fallTime, Enum.EasingStyle.Linear), { BackgroundTransparency = 1 })
-                local fadeTween2 = TweenService:Create(bar2,
-                    TweenInfo.new(fallTime, Enum.EasingStyle.Linear), { BackgroundTransparency = 1 })
-                tween:Play(); fadeTween:Play(); fadeTween2:Play()
-                tween.Completed:Connect(function() starContainer:Destroy() end)
-                task.wait(math.random(2,5)/10)
+                tween:Play()
+                tween.Completed:Connect(function() star:Destroy() end)
+                task.wait(math.random(2, 5) / 10)
             end
         end)
     end
@@ -591,7 +573,7 @@ function UILib:CreateWindow(cfg)
 
             -- ── Button ────────────────────────────────────────────────────────
             function Sec:AddButton(cfg)
-                local b = btn(container, { Text = cfg.Name, TextColor = T.Pink, TextSize = 13, Size = UDim2.new(1,0,0,28), Color = T.BG3, ZIndex = 6 })
+                local b = btn(container, { Text = cfg.Name, TextColor = Color3.fromRGB(255,255,255), TextSize = 13, Size = UDim2.new(1,0,0,28), Color = T.BG3, ZIndex = 6 })
                 b.LayoutOrder = nextOrder()
                 makecorner(b, 4)
                 makestroke(b, T.Pink, 1, 0.7)
