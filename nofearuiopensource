@@ -1,6 +1,6 @@
 
 --// ============================================================
---// NO.FEAR UI LIBRARY v1.0
+--// NO.FEAR UI LIBRARY v1.0 s
 --// ============================================================
 -- Usage:
 --   local UI = loadstring(game:HttpGet("...NoFear_UILib.lua"))()
@@ -195,11 +195,12 @@ function UILib:CreateWindow(cfg)
     local g3 = Instance.new("UIStroke", glowFrame3)
     g3.Color = Color3.fromRGB(255,255,255); g3.Thickness = 6; g3.Transparency = 0.88; g3.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
-    -- Keep glow frames in sync when UI is dragged
-    Main:GetPropertyChangedSignal("Position"):Connect(function()
-        local p = Main.Position
-        glowFrame2.Position = UDim2.new(p.X.Scale, p.X.Offset-4, p.Y.Scale, p.Y.Offset-4)
-        glowFrame3.Position = UDim2.new(p.X.Scale, p.X.Offset-9, p.Y.Scale, p.Y.Offset-9)
+    -- Keep glow frames in sync when UI is dragged (use AbsolutePosition for accuracy)
+    RunService.RenderStepped:Connect(function()
+        if not Main or not Main.Parent then return end
+        local ap = Main.AbsolutePosition
+        glowFrame2.Position = UDim2.new(0, ap.X - 4, 0, ap.Y - 4)
+        glowFrame3.Position = UDim2.new(0, ap.X - 9, 0, ap.Y - 9)
     end)
     Main:GetPropertyChangedSignal("Visible"):Connect(function()
         glowFrame2.Visible = Main.Visible
@@ -222,8 +223,8 @@ function UILib:CreateWindow(cfg)
                 star.BackgroundTransparency = 1
                 star.Size = UDim2.new(0, sz, 0, sz)
                 star.Position = UDim2.new(math.random(0,100)/100, 0, -0.04, 0)
-                star.ZIndex = 1
-                star.Image = "rbxassetid://4488858550" -- white 4-pointed star sparkle
+                star.ZIndex = 25 -- above main frame (ZIndex 2) so stars are visible
+                star.Image = "rbxassetid://3926305748" -- confirmed working sparkle star
                 star.ImageColor3 = Color3.fromRGB(255, 255, 255)
                 star.ImageTransparency = alpha
                 star.ScaleType = Enum.ScaleType.Fit
