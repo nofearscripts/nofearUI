@@ -33,7 +33,7 @@ local LP          = Players.LocalPlayer
 -- Multi-executor request support
 local request = syn and syn.request or http_request or request or (http and http.request)
 
--- â”€â”€ Counter (background, non-blocking) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ── Counter (background, non-blocking) ───────────────────────────────────────
 local function incrementCounter()
     local ok, response = pcall(function()
         return game:HttpGet("https://api.counterapi.dev/v1/" .. CounterNamespace .. "/" .. CounterKey .. "/up")
@@ -100,19 +100,25 @@ end
 
 local function validateKey(key)
     if not key or #key < 5 then return false, "No key provided" end
-    local upperKey = key:upper()
-    local body = HttpService:JSONEncode({ key = upperKey, hwid = HWID, license_key = upperKey })
 
-    -- Try free key endpoint first
+    -- mk_live_ keys (NebulAuth) are case-sensitive, NOFEAR- keys are uppercase
+    local sendKey = key:match("^mk_") and key or key:upper()
+    local body = HttpService:JSONEncode({ key = sendKey, hwid = HWID, license_key = sendKey })
+
+    -- Try free key endpoint first (handles both mk_live_ and NOFEAR- keys)
     local raw = httpPost(KEY_SERVER .. "/api/key/validate", body)
     if raw then
         local ok, decoded = pcall(HttpService.JSONDecode, HttpService, raw)
         if ok and decoded then
             if decoded.valid then
-                local diff  = math.max(0, math.floor((decoded.expires_at or 0) / 1000) - os.time())
-                local hours = math.floor(diff / 3600)
-                local mins  = math.floor((diff % 3600) / 60)
-                return true, string.format("Key valid - expires in %dh %dm", hours, mins)
+                if decoded.expires_at and decoded.expires_at > 0 then
+                    local diff  = math.max(0, math.floor(decoded.expires_at / 1000) - os.time())
+                    local hours = math.floor(diff / 3600)
+                    local mins  = math.floor((diff % 3600) / 60)
+                    return true, string.format("Key valid - expires in %dh %dm", hours, mins)
+                else
+                    return true, "Key valid"
+                end
             end
             -- If free key failed, try premium key endpoint
             local raw2 = httpPost(KEY_SERVER .. "/api/verify", body)
@@ -490,7 +496,8 @@ local function createKeyUI(onSuccess)
     EnterBtn.MouseButton1Click:Connect(function()
         if busy then return end
         busy = true
-        local key = InputBox.Text:match("^%s*(.-)%s*$"):upper()
+        -- mk_live_ keys are case-sensitive, preserve case
+        local key = InputBox.Text:match("^%s*(.-)%s*$")
         if #key < 5 then
             StatusLabel.TextColor3 = Color3.fromRGB(220,70,70)
             StatusLabel.Text = "Please enter a valid key."
@@ -530,19 +537,19 @@ local function runWithKeyCheck(callback)
     if cached and #cached > 5 then
         local valid, msg = validateKey(cached)
         if valid then
-            print("[NoFear] âœ… " .. msg)
+            print("[NoFear] ✅ " .. msg)
             callback()
             return
         else
-            print("[NoFear] âš  Cached key invalid: " .. msg)
+            print("[NoFear] ⚠ Cached key invalid: " .. msg)
             clearSavedKey()
         end
     end
 
     -- 2. Show key UI, run callback after success
-    print("[NoFear] ðŸ”‘ Key required â€” showing key UI")
+    print("[NoFear] 🔑 Key required — showing key UI")
     createKeyUI(function()
-        print("[NoFear] âœ… Key accepted â€” loading " .. ScriptName)
+        print("[NoFear] ✅ Key accepted — loading " .. ScriptName)
         callback()
     end)
 end
