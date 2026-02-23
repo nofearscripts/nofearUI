@@ -1,4 +1,4 @@
--- NoFear Drawing UI Library v9.4
+-- NoFear Drawing UI Library v9.5
 -- Fixed: gpe blocking clicks, slider double-handler, Transparency on tab elements, stars visibility
 -- Fixed: ZIndex layering on high-end executors (Volt), floating UI elements
 -- Added: Mobile touch support (TouchTap, TouchPan for drag/slider)
@@ -840,6 +840,11 @@ function DrawLib:CreateWindow(cfg)
     return W
 end
 
+-- Support both return and getfenv for cross-executor compatibility
+local env = getfenv and getfenv(0)
+if env then
+    env.DrawLib = DrawLib
+end
 return DrawLib
 
 
