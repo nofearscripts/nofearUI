@@ -1,4 +1,4 @@
--- NoFear Drawing UI Library v9.5
+-- NoFear Drawing UI Library v9.6
 -- Fixed: gpe blocking clicks, slider double-handler, Transparency on tab elements, stars visibility
 -- Fixed: ZIndex layering on high-end executors (Volt), floating UI elements
 -- Added: Mobile touch support (TouchTap, TouchPan for drag/slider)
@@ -66,25 +66,25 @@ function DrawLib:CreateWindow(cfg)
     end
 
     -- Chrome drawings
-    local bg    = D("Square",{Filled=true,Color=T.BG,   Transparency=1,ZIndex=101,Size=Vector2.new(WW,WH),        Position=Vector2.new(WX,WY)})
-    local tbar  = D("Square",{Filled=true,Color=T.SB,   Transparency=1,ZIndex=102,Size=Vector2.new(WW,TBH),       Position=Vector2.new(WX,WY)})
-    local ttxt  = D("Text",  {Text=title, Color=T.Pink, Transparency=1,ZIndex=103,Size=14,Font=Drawing.Fonts.GothamBold,Outline=false,Position=Vector2.new(WX+10,WY+8)})
-    local gtxt  = D("Text",  {Text=gameName,Color=T.Dim,Transparency=1,ZIndex=103,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,Position=Vector2.new(WX+WW-100,WY+10)})
-    local sbar  = D("Square",{Filled=true,Color=T.SB,   Transparency=1,ZIndex=102,Size=Vector2.new(SBW,WH-TBH-BBH),Position=Vector2.new(WX,WY+TBH)})
-    local sbln  = D("Line",  {Color=T.SEP,Thickness=1,  Transparency=1,ZIndex=103,From=Vector2.new(WX+SBW,WY+TBH),To=Vector2.new(WX+SBW,WY+WH-BBH)})
-    local cdiv  = D("Line",  {Color=T.SEP,Thickness=1,  Transparency=1,ZIndex=103,From=Vector2.new(WX+SBW+CW+1,WY+TBH),To=Vector2.new(WX+SBW+CW+1,WY+WH-BBH)})
-    local tbln  = D("Line",  {Color=T.SEP,Thickness=1,  Transparency=1,ZIndex=103,From=Vector2.new(WX,WY+TBH),To=Vector2.new(WX+WW,WY+TBH)})
-    local bbar  = D("Square",{Filled=true,Color=T.SB,   Transparency=1,ZIndex=102,Size=Vector2.new(WW,BBH),        Position=Vector2.new(WX,WY+WH-BBH)})
-    local bbln  = D("Line",  {Color=T.SEP,Thickness=1,  Transparency=1,ZIndex=103,From=Vector2.new(WX,WY+WH-BBH),To=Vector2.new(WX+WW,WY+WH-BBH)})
-    local bbtxt = D("Text",  {Text="discord.gg/G9QSXsB9wY",Color=T.Dim,Transparency=1,ZIndex=103,Size=11,Font=Drawing.Fonts.Gotham,Outline=false,Position=Vector2.new(WX+WW/2-80,WY+WH-BBH+5)})
-    local bord  = D("Square",{Filled=false,Color=Color3.fromRGB(60,60,60),Thickness=1,Transparency=1,ZIndex=102,Size=Vector2.new(WW,WH),Position=Vector2.new(WX,WY)})
+    local bg    = D("Square",{Filled=true,Color=T.BG,   Transparency=1,ZIndex=1001,Size=Vector2.new(WW,WH),        Position=Vector2.new(WX,WY)})
+    local tbar  = D("Square",{Filled=true,Color=T.SB,   Transparency=1,ZIndex=1002,Size=Vector2.new(WW,TBH),       Position=Vector2.new(WX,WY)})
+    local ttxt  = D("Text",  {Text=title, Color=T.Pink, Transparency=1,ZIndex=1003,Size=14,Font=Drawing.Fonts.GothamBold,Outline=false,Position=Vector2.new(WX+10,WY+8)})
+    local gtxt  = D("Text",  {Text=gameName,Color=T.Dim,Transparency=1,ZIndex=1003,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,Position=Vector2.new(WX+WW-100,WY+10)})
+    local sbar  = D("Square",{Filled=true,Color=T.SB,   Transparency=1,ZIndex=1002,Size=Vector2.new(SBW,WH-TBH-BBH),Position=Vector2.new(WX,WY+TBH)})
+    local sbln  = D("Line",  {Color=T.SEP,Thickness=1,  Transparency=1,ZIndex=1003,From=Vector2.new(WX+SBW,WY+TBH),To=Vector2.new(WX+SBW,WY+WH-BBH)})
+    local cdiv  = D("Line",  {Color=T.SEP,Thickness=1,  Transparency=1,ZIndex=1003,From=Vector2.new(WX+SBW+CW+1,WY+TBH),To=Vector2.new(WX+SBW+CW+1,WY+WH-BBH)})
+    local tbln  = D("Line",  {Color=T.SEP,Thickness=1,  Transparency=1,ZIndex=1003,From=Vector2.new(WX,WY+TBH),To=Vector2.new(WX+WW,WY+TBH)})
+    local bbar  = D("Square",{Filled=true,Color=T.SB,   Transparency=1,ZIndex=1002,Size=Vector2.new(WW,BBH),        Position=Vector2.new(WX,WY+WH-BBH)})
+    local bbln  = D("Line",  {Color=T.SEP,Thickness=1,  Transparency=1,ZIndex=1003,From=Vector2.new(WX,WY+WH-BBH),To=Vector2.new(WX+WW,WY+WH-BBH)})
+    local bbtxt = D("Text",  {Text="discord.gg/G9QSXsB9wY",Color=T.Dim,Transparency=1,ZIndex=1003,Size=11,Font=Drawing.Fonts.Gotham,Outline=false,Position=Vector2.new(WX+WW/2-80,WY+WH-BBH+5)})
+    local bord  = D("Square",{Filled=false,Color=Color3.fromRGB(60,60,60),Thickness=1,Transparency=1,ZIndex=1002,Size=Vector2.new(WW,WH),Position=Vector2.new(WX,WY)})
     -- White glow: 6 layered outlines with strong visibility
-    local glow1 = D("Square",{Filled=false,Color=Color3.fromRGB(255,255,255),Thickness=2,Transparency=0.85,ZIndex=101,Size=Vector2.new(WW+2,WH+2),Position=Vector2.new(WX-1,WY-1)})
-    local glow2 = D("Square",{Filled=false,Color=Color3.fromRGB(255,255,255),Thickness=2,Transparency=0.65,ZIndex=101,Size=Vector2.new(WW+5,WH+5),Position=Vector2.new(WX-2,WY-2)})
-    local glow3 = D("Square",{Filled=false,Color=Color3.fromRGB(255,255,255),Thickness=1,Transparency=0.45,ZIndex=101,Size=Vector2.new(WW+9,WH+9),Position=Vector2.new(WX-4,WY-4)})
-    local glow4 = D("Square",{Filled=false,Color=Color3.fromRGB(255,255,255),Thickness=1,Transparency=0.25,ZIndex=101,Size=Vector2.new(WW+13,WH+13),Position=Vector2.new(WX-6,WY-6)})
-    local glow5 = D("Square",{Filled=false,Color=Color3.fromRGB(255,255,255),Thickness=1,Transparency=0.12,ZIndex=101,Size=Vector2.new(WW+18,WH+18),Position=Vector2.new(WX-9,WY-9)})
-    local glow6 = D("Square",{Filled=false,Color=Color3.fromRGB(255,255,255),Thickness=1,Transparency=0.05,ZIndex=101,Size=Vector2.new(WW+24,WH+24),Position=Vector2.new(WX-12,WY-12)})
+    local glow1 = D("Square",{Filled=false,Color=Color3.fromRGB(255,255,255),Thickness=2,Transparency=0.85,ZIndex=1001,Size=Vector2.new(WW+2,WH+2),Position=Vector2.new(WX-1,WY-1)})
+    local glow2 = D("Square",{Filled=false,Color=Color3.fromRGB(255,255,255),Thickness=2,Transparency=0.65,ZIndex=1001,Size=Vector2.new(WW+5,WH+5),Position=Vector2.new(WX-2,WY-2)})
+    local glow3 = D("Square",{Filled=false,Color=Color3.fromRGB(255,255,255),Thickness=1,Transparency=0.45,ZIndex=1001,Size=Vector2.new(WW+9,WH+9),Position=Vector2.new(WX-4,WY-4)})
+    local glow4 = D("Square",{Filled=false,Color=Color3.fromRGB(255,255,255),Thickness=1,Transparency=0.25,ZIndex=1001,Size=Vector2.new(WW+13,WH+13),Position=Vector2.new(WX-6,WY-6)})
+    local glow5 = D("Square",{Filled=false,Color=Color3.fromRGB(255,255,255),Thickness=1,Transparency=0.12,ZIndex=1001,Size=Vector2.new(WW+18,WH+18),Position=Vector2.new(WX-9,WY-9)})
+    local glow6 = D("Square",{Filled=false,Color=Color3.fromRGB(255,255,255),Thickness=1,Transparency=0.05,ZIndex=1001,Size=Vector2.new(WW+24,WH+24),Position=Vector2.new(WX-12,WY-12)})
 
     local function reposition()
         bg.Size=Vector2.new(WW,WH);           bg.Position=Vector2.new(WX,WY)
@@ -522,12 +522,12 @@ function DrawLib:CreateWindow(cfg)
         local ty=WY+TBH+(idx-1)*34
 
         local tab={name=tname,els={}}
-        tab.bg  = D("Square",{Filled=true,Color=T.SB,Transparency=1,ZIndex=104,Size=Vector2.new(SBW,34),Position=Vector2.new(WX,ty)})
-        tab.acc = D("Square",{Filled=true,Color=T.Pink,Transparency=1,ZIndex=105,Size=Vector2.new(3,20),Position=Vector2.new(WX,ty+7),Visible=false})
-        tab.txt = D("Text",{Text=tname,Color=T.Dim,Transparency=1,Size=13,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=105,Position=Vector2.new(WX+14,ty+10)})
+        tab.bg  = D("Square",{Filled=true,Color=T.SB,Transparency=1,ZIndex=1004,Size=Vector2.new(SBW,34),Position=Vector2.new(WX,ty)})
+        tab.acc = D("Square",{Filled=true,Color=T.Pink,Transparency=1,ZIndex=1005,Size=Vector2.new(3,20),Position=Vector2.new(WX,ty+7),Visible=false})
+        tab.txt = D("Text",{Text=tname,Color=T.Dim,Transparency=1,Size=13,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=1005,Position=Vector2.new(WX+14,ty+10)})
         tab.sep = nil
         if idx>1 then
-            tab.sep=D("Line",{Color=T.SEP,Thickness=1,Transparency=1,ZIndex=104,From=Vector2.new(WX,ty),To=Vector2.new(WX+SBW,ty)})
+            tab.sep=D("Line",{Color=T.SEP,Thickness=1,Transparency=1,ZIndex=1004,From=Vector2.new(WX,ty),To=Vector2.new(WX+SBW,ty)})
         end
         table.insert(tabs,tab)
 
@@ -564,10 +564,10 @@ function DrawLib:CreateWindow(cfg)
             local xo=isR and RXo or LXo
             local yo=isR and rYo or lYo
 
-            local hbg  = nd("Square",{Filled=true,Color=T.BG2,Transparency=1,ZIndex=104,Size=Vector2.new(colW,20),Position=Vector2.new(WX+xo,WY+yo)})
-            local hacc = nd("Square",{Filled=true,Color=T.Pink,Transparency=1,ZIndex=105,Size=Vector2.new(3,14),Position=Vector2.new(WX+xo,WY+yo+3)})
-            local htxt = nd("Text",{Text=sn,Color=T.White,Transparency=1,Size=13,Font=Drawing.Fonts.GothamBold,Outline=false,ZIndex=105,Position=Vector2.new(WX+xo+8,WY+yo+3)})
-            local hsep = nd("Line",{Color=T.SEP,Thickness=1,Transparency=1,ZIndex=104,From=Vector2.new(WX+xo,WY+yo+20),To=Vector2.new(WX+xo+colW,WY+yo+20)})
+            local hbg  = nd("Square",{Filled=true,Color=T.BG2,Transparency=1,ZIndex=1004,Size=Vector2.new(colW,20),Position=Vector2.new(WX+xo,WY+yo)})
+            local hacc = nd("Square",{Filled=true,Color=T.Pink,Transparency=1,ZIndex=1005,Size=Vector2.new(3,14),Position=Vector2.new(WX+xo,WY+yo+3)})
+            local htxt = nd("Text",{Text=sn,Color=T.White,Transparency=1,Size=13,Font=Drawing.Fonts.GothamBold,Outline=false,ZIndex=1005,Position=Vector2.new(WX+xo+8,WY+yo+3)})
+            local hsep = nd("Line",{Color=T.SEP,Thickness=1,Transparency=1,ZIndex=1004,From=Vector2.new(WX+xo,WY+yo+20),To=Vector2.new(WX+xo+colW,WY+yo+20)})
             -- Add section drawings to allD so setVisible() can toggle them
             table.insert(allD, hbg); table.insert(allD, hacc); table.insert(allD, htxt); table.insert(allD, hsep)
             addEl(hbg,xo,yo,hacc,xo,yo+3,htxt,xo+8,yo+3)
@@ -584,9 +584,9 @@ function DrawLib:CreateWindow(cfg)
                 local yo2=isR and rYo or lYo
                 local kox_off=state and colW-34+16 or colW-34+2
 
-                local rbg  =nd("Square",{Filled=true,Color=T.BG,Transparency=1,ZIndex=104,Size=Vector2.new(colW,24),Position=Vector2.new(WX+xo,WY+yo2)})
-                local rtxt =nd("Text",{Text=tn,Color=T.Dim,Transparency=1,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=105,Position=Vector2.new(WX+xo+6,WY+yo2+6)})
-                local track=nd("Square",{Filled=true,Color=state and T.Pink or T.SEP,Transparency=1,ZIndex=105,Size=Vector2.new(28,14),Position=Vector2.new(WX+xo+colW-34,WY+yo2+5)})
+                local rbg  =nd("Square",{Filled=true,Color=T.BG,Transparency=1,ZIndex=1004,Size=Vector2.new(colW,24),Position=Vector2.new(WX+xo,WY+yo2)})
+                local rtxt =nd("Text",{Text=tn,Color=T.Dim,Transparency=1,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=1005,Position=Vector2.new(WX+xo+6,WY+yo2+6)})
+                local track=nd("Square",{Filled=true,Color=state and T.Pink or T.SEP,Transparency=1,ZIndex=1005,Size=Vector2.new(28,14),Position=Vector2.new(WX+xo+colW-34,WY+yo2+5)})
                 local knob =nd("Square",{Filled=true,Color=T.White,Transparency=1,ZIndex=106,Size=Vector2.new(10,10),Position=Vector2.new(WX+xo+kox_off,WY+yo2+7)})
 
                 -- Store knob el so redraw can update ox4
@@ -616,9 +616,9 @@ function DrawLib:CreateWindow(cfg)
                 local yo2=isR and rYo or lYo
                 local slW=colW-12
 
-                local rbg  =nd("Square",{Filled=true,Color=T.BG,Transparency=1,ZIndex=104,Size=Vector2.new(colW,34),Position=Vector2.new(WX+xo,WY+yo2)})
-                local stxt =nd("Text",{Text=sn2..": "..tostring(val),Color=T.Dim,Transparency=1,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=105,Position=Vector2.new(WX+xo+6,WY+yo2+4)})
-                local strack=nd("Square",{Filled=true,Color=T.SEP,Transparency=1,ZIndex=105,Size=Vector2.new(slW,4),Position=Vector2.new(WX+xo+6,WY+yo2+22)})
+                local rbg  =nd("Square",{Filled=true,Color=T.BG,Transparency=1,ZIndex=1004,Size=Vector2.new(colW,34),Position=Vector2.new(WX+xo,WY+yo2)})
+                local stxt =nd("Text",{Text=sn2..": "..tostring(val),Color=T.Dim,Transparency=1,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=1005,Position=Vector2.new(WX+xo+6,WY+yo2+4)})
+                local strack=nd("Square",{Filled=true,Color=T.SEP,Transparency=1,ZIndex=1005,Size=Vector2.new(slW,4),Position=Vector2.new(WX+xo+6,WY+yo2+22)})
                 local pct0=((val-mn)/(mx2-mn))
                 local sfill=nd("Square",{Filled=true,Color=T.Pink,Transparency=1,ZIndex=106,Size=Vector2.new(math.max(1,math.floor(pct0*slW)),4),Position=Vector2.new(WX+xo+6,WY+yo2+22)})
 
@@ -641,9 +641,9 @@ function DrawLib:CreateWindow(cfg)
                 local ci=1
                 for i,o in ipairs(opts) do if tostring(o)==val then ci=i;break end end
 
-                local rbg  =nd("Square",{Filled=true,Color=T.BG,Transparency=1,ZIndex=104,Size=Vector2.new(colW,34),Position=Vector2.new(WX+xo,WY+yo2)})
-                local dtxt =nd("Text",{Text=dn,Color=T.Dim,Transparency=1,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=105,Position=Vector2.new(WX+xo+6,WY+yo2+4)})
-                local dbox =nd("Square",{Filled=true,Color=T.SEP,Transparency=1,ZIndex=105,Size=Vector2.new(colW-12,16),Position=Vector2.new(WX+xo+6,WY+yo2+16)})
+                local rbg  =nd("Square",{Filled=true,Color=T.BG,Transparency=1,ZIndex=1004,Size=Vector2.new(colW,34),Position=Vector2.new(WX+xo,WY+yo2)})
+                local dtxt =nd("Text",{Text=dn,Color=T.Dim,Transparency=1,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=1005,Position=Vector2.new(WX+xo+6,WY+yo2+4)})
+                local dbox =nd("Square",{Filled=true,Color=T.SEP,Transparency=1,ZIndex=1005,Size=Vector2.new(colW-12,16),Position=Vector2.new(WX+xo+6,WY+yo2+16)})
                 local dvtxt=nd("Text",{Text=val,Color=T.White,Transparency=1,Size=11,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=106,Position=Vector2.new(WX+xo+9,WY+yo2+18)})
                 local darr =nd("Text",{Text="v",Color=T.Dim,Transparency=1,Size=10,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=106,Position=Vector2.new(WX+xo+colW-20,WY+yo2+18)})
 
@@ -804,7 +804,7 @@ function DrawLib:CreateWindow(cfg)
                 local lt=tostring(lc.Text or "")
                 local lcolor=lc.Color or T.Dim
                 local yo2=isR and rYo or lYo
-                local ltxt=nd("Text",{Text=lt,Color=lcolor,Transparency=1,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=105,Position=Vector2.new(WX+xo+6,WY+yo2+4)})
+                local ltxt=nd("Text",{Text=lt,Color=lcolor,Transparency=1,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=1005,Position=Vector2.new(WX+xo+6,WY+yo2+4)})
                 addEl(ltxt,xo+6,yo2+4)
                 if isR then rYo=yo2+18 else lYo=yo2+18 end
             end
@@ -814,7 +814,7 @@ function DrawLib:CreateWindow(cfg)
                 local bn=tostring(bc.Name or "Button")
                 local bcb=bc.Callback or function()end
                 local yo2=isR and rYo or lYo
-                local bbg=nd("Square",{Filled=true,Color=T.SEP,Transparency=1,ZIndex=105,Size=Vector2.new(colW-12,20),Position=Vector2.new(WX+xo+6,WY+yo2+2)})
+                local bbg=nd("Square",{Filled=true,Color=T.SEP,Transparency=1,ZIndex=1005,Size=Vector2.new(colW-12,20),Position=Vector2.new(WX+xo+6,WY+yo2+2)})
                 local btt=nd("Text",{Text=bn,Color=T.White,Transparency=1,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=106,Position=Vector2.new(WX+xo+colW/2-20,WY+yo2+5)})
                 addEl(bbg,xo+6,yo2+2,btt,xo+colW/2-20,yo2+5)
                 addH(xo+6,yo2+2,colW-12,20,function()
@@ -846,6 +846,8 @@ if env then
     env.DrawLib = DrawLib
 end
 return DrawLib
+
+
 
 
 
