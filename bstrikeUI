@@ -1,4 +1,4 @@
--- NoFear Drawing UI Library v9.6
+-- NoFear Drawing UI Library v9.7
 -- Fixed: gpe blocking clicks, slider double-handler, Transparency on tab elements, stars visibility
 -- Fixed: ZIndex layering on high-end executors (Volt), floating UI elements
 -- Added: Mobile touch support (TouchTap, TouchPan for drag/slider)
@@ -691,14 +691,14 @@ function DrawLib:CreateWindow(cfg)
                         -- Background panel
                         local pbg = Drawing.new("Square")
                         pbg.Filled=true; pbg.Color=Color3.fromRGB(28,28,28); pbg.Transparency=1
-                        pbg.ZIndex=150; pbg.Size=Vector2.new(lw+2, visCount*itemH+2)
+                        pbg.ZIndex=2000; pbg.Size=Vector2.new(lw+2, visCount*itemH+2)
                         pbg.Position=Vector2.new(lx-1, ly-1); pbg.Visible=true
                         table.insert(dropListDraws, pbg)
 
                         -- Border
                         local pbord = Drawing.new("Square")
                         pbord.Filled=false; pbord.Color=T.SEP; pbord.Transparency=1; pbord.Thickness=1
-                        pbord.ZIndex=151; pbord.Size=Vector2.new(lw+2, visCount*itemH+2)
+                        pbord.ZIndex=2001; pbord.Size=Vector2.new(lw+2, visCount*itemH+2)
                         pbord.Position=Vector2.new(lx-1, ly-1); pbord.Visible=true
                         table.insert(dropListDraws, pbord)
 
@@ -713,7 +713,7 @@ function DrawLib:CreateWindow(cfg)
                             ibg.Filled = true
                             ibg.Color = isSel and T.Pink or Color3.fromRGB(35,35,35)
                             ibg.Transparency = 1
-                            ibg.ZIndex = 52
+                            ibg.ZIndex = 2002
                             ibg.Size = Vector2.new(lw, itemH)
                             ibg.Position = Vector2.new(lx, iy)
                             ibg.Visible = true
@@ -727,7 +727,7 @@ function DrawLib:CreateWindow(cfg)
                             pcall(function() itxt.Font = Drawing.Fonts.Gotham end)
                             itxt.Outline = false
                             itxt.Center = false
-                            itxt.ZIndex = 53
+                            itxt.ZIndex = 2003
                             itxt.Position = Vector2.new(lx+4, iy+2)
                             itxt.Visible = true
                             table.insert(dropListDraws, itxt)
@@ -754,7 +754,7 @@ function DrawLib:CreateWindow(cfg)
                             local ua = Drawing.new("Text")
                             ua.Text="▲"; ua.Color=T.Dim; ua.Transparency=1
                             ua.Size=10; ua.Font=Drawing.Fonts.Gotham; ua.Outline=false
-                            ua.ZIndex=153; ua.Position=Vector2.new(lx+lw-14, ly+2); ua.Visible=true
+                            ua.ZIndex=2004; ua.Position=Vector2.new(lx+lw-14, ly+2); ua.Visible=true
                             table.insert(dropListDraws, ua)
                             local h={ax=lx+lw-16, ay=ly, w=16, h=itemH, tabIdx=activeTab,
                                 fn=function()
@@ -771,7 +771,7 @@ function DrawLib:CreateWindow(cfg)
                             local da = Drawing.new("Text")
                             da.Text="▼"; da.Color=T.Dim; da.Transparency=1
                             da.Size=10; da.Font=Drawing.Fonts.Gotham; da.Outline=false
-                            da.ZIndex=153
+                            da.ZIndex=2004
                             da.Position=Vector2.new(lx+lw-14, ly+(math.min(maxVisible,#opts)-1)*itemH+2); da.Visible=true
                             table.insert(dropListDraws, da)
                             local h={ax=lx+lw-16, ay=ly+(math.min(maxVisible,#opts)-1)*itemH, w=16, h=itemH, tabIdx=activeTab,
@@ -846,8 +846,4 @@ if env then
     env.DrawLib = DrawLib
 end
 return DrawLib
-
-
-
-
 
