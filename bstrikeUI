@@ -1,6 +1,7 @@
--- NoFear Drawing UI Library v9.2
+-- NoFear Drawing UI Library v9.3
 -- Fixed: gpe blocking clicks, slider double-handler, Transparency on tab elements, stars visibility
 -- Fixed: ZIndex layering on high-end executors (Volt), floating UI elements
+-- Added: Mobile touch support (TouchTap, TouchPan for drag/slider)
 
 local DrawLib = {}
 local UIS = game:GetService("UserInputService")
@@ -209,6 +210,133 @@ function DrawLib:CreateWindow(cfg)
             end
         end
     end)
+
+    -- ── Mobile Touch Support ──────────────────────────────────────────────────
+    local isMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled
+    local touchDragging = false
+    local touchDragStartX, touchDragStartY = 0, 0
+    local touchSliding = nil
+
+    if isMobile then
+        -- Add a toggle button in top-right corner for mobile
+        local toggleBtn = Drawing.new("Square")
+        toggleBtn.Filled = true
+        toggleBtn.Color = Color3.fromRGB(255,105,180)
+        toggleBtn.Transparency = 1
+        toggleBtn.ZIndex = 200
+        toggleBtn.Size = Vector2.new(44, 44)
+        toggleBtn.Position = Vector2.new(workspace.CurrentCamera.ViewportSize.X - 52, 8)
+        toggleBtn.Visible = true
+
+        local toggleBtnTxt = Drawing.new("Text")
+        toggleBtnTxt.Text = "NF"
+        toggleBtnTxt.Color = Color3.fromRGB(255,255,255)
+        toggleBtnTxt.Transparency = 1
+        toggleBtnTxt.Size = 14
+        toggleBtnTxt.ZIndex = 201
+        pcall(function() toggleBtnTxt.Font = Drawing.Fonts.GothamBold end)
+        toggleBtnTxt.Outline = false
+        toggleBtnTxt.Position = Vector2.new(workspace.CurrentCamera.ViewportSize.X - 44, 22)
+        toggleBtnTxt.Visible = true
+
+        UIS.TouchTap:Connect(function(positions)
+            if not ready then return end
+            local pos = positions[1]
+            local tx, ty = pos.X, pos.Y
+
+            -- Toggle button hit
+            local vp = workspace.CurrentCamera.ViewportSize
+            if tx >= vp.X - 52 and tx <= vp.X - 8 and ty >= 8 and ty <= 52 then
+                setVisible(not visible)
+                return
+            end
+
+            if not visible then return end
+
+            -- Tab clicks
+            for i, tab in ipairs(tabs) do
+                local tty = WY + TBH + (i-1)*34
+                if tx >= WX and tx <= WX+SBW and ty >= tty and ty <= tty+34 then
+                    closeOpenDropdown()
+                    activateTab(i)
+                    return
+                end
+            end
+
+            -- Dropdown item handlers (absolute coords)
+            if openDropdown ~= nil then
+                for _, h in ipairs(dropHandlers) do
+                    if tx >= h.ax and tx <= h.ax+h.w and ty >= h.ay and ty <= h.ay+h.h then
+                        pcall(h.fn)
+                        return
+                    end
+                end
+                closeOpenDropdown()
+                return
+            end
+
+            -- Regular element handlers
+            local sc = tabScrollY[activeTab] or 0
+            for _, h in ipairs(handlers) do
+                if h.tabIdx == activeTab then
+                    local ax = WX + h.ox
+                    local ay = WY + h.oy - sc
+                    if ay < WY+TBH or ay > WY+WH-BBH then continue end
+                    if tx >= ax and tx <= ax+h.w and ty >= ay and ty <= ay+h.h then
+                        if h.isSlider then
+                            local pct = math.clamp((tx - ax) / h.slW, 0, 1)
+                            local val = math.floor(h.mn + pct*(h.mx-h.mn))
+                            h.fill.Size = Vector2.new(math.max(1,math.floor(pct*h.slW)),4)
+                            h.vtxt.Text = h.name..": "..tostring(val)
+                            pcall(h.fn, val)
+                        else
+                            pcall(h.fn)
+                        end
+                        return
+                    end
+                end
+            end
+        end)
+
+        -- Touch drag for window dragging and scrolling
+        UIS.TouchStarted:Connect(function(touch)
+            if not visible or not ready then return end
+            local tx, ty = touch.Position.X, touch.Position.Y
+            -- Drag titlebar
+            if ty >= WY and ty <= WY+TBH and tx >= WX and tx <= WX+WW then
+                touchDragging = true
+                touchDragStartX = tx - WX
+                touchDragStartY = ty - WY
+            end
+        end)
+
+        UIS.TouchMoved:Connect(function(touch)
+            if not visible or not ready then return end
+            if touchDragging then
+                WX = touch.Position.X - touchDragStartX
+                WY = touch.Position.Y - touchDragStartY
+                reposition()
+            end
+            -- Scroll content area
+            local tx, ty = touch.Position.X, touch.Position.Y
+            if tx >= WX+SBW and tx <= WX+WW and ty >= WY+TBH and ty <= WY+WH-BBH then
+                -- handled by TouchPan
+            end
+        end)
+
+        UIS.TouchEnded:Connect(function()
+            touchDragging = false
+        end)
+
+        UIS.TouchPan:Connect(function(positions, totalTranslation, velocity, state)
+            if not visible or not ready then return end
+            local pos = positions[1]
+            if pos.X >= WX+SBW and pos.X <= WX+WW and pos.Y >= WY+TBH and pos.Y <= WY+WH-BBH then
+                tabScrollY[activeTab] = math.max(0, (tabScrollY[activeTab] or 0) - totalTranslation.Y * 0.5)
+                reposition()
+            end
+        end)
+    end
 
     -- Main poll loop: runs every frame, checks mouse button state directly
     RS:BindToRenderStep("NFUIv9Poll", Enum.RenderPriority.Input.Value, function()
@@ -713,5 +841,6 @@ function DrawLib:CreateWindow(cfg)
 end
 
 return DrawLib
+
 
 
