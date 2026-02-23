@@ -1,4 +1,4 @@
--- NoFear Drawing UI Library v9.7.1
+-- NoFear Drawing UI Library v9.8
 -- Fixed: gpe blocking clicks, slider double-handler, Transparency on tab elements, stars visibility
 -- Fixed: ZIndex layering on high-end executors (Volt), floating UI elements
 -- Added: Mobile touch support (TouchTap, TouchPan for drag/slider)
@@ -587,7 +587,7 @@ function DrawLib:CreateWindow(cfg)
                 local rbg  =nd("Square",{Filled=true,Color=T.BG,Transparency=1,ZIndex=1004,Size=Vector2.new(colW,24),Position=Vector2.new(WX+xo,WY+yo2)})
                 local rtxt =nd("Text",{Text=tn,Color=T.Dim,Transparency=1,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=1005,Position=Vector2.new(WX+xo+6,WY+yo2+6)})
                 local track=nd("Square",{Filled=true,Color=state and T.Pink or T.SEP,Transparency=1,ZIndex=1005,Size=Vector2.new(28,14),Position=Vector2.new(WX+xo+colW-34,WY+yo2+5)})
-                local knob =nd("Square",{Filled=true,Color=T.White,Transparency=1,ZIndex=106,Size=Vector2.new(10,10),Position=Vector2.new(WX+xo+kox_off,WY+yo2+7)})
+                local knob =nd("Square",{Filled=true,Color=T.White,Transparency=1,ZIndex=1006,Size=Vector2.new(10,10),Position=Vector2.new(WX+xo+kox_off,WY+yo2+7)})
 
                 -- Store knob el so redraw can update ox4
                 local elRef={}
@@ -620,7 +620,7 @@ function DrawLib:CreateWindow(cfg)
                 local stxt =nd("Text",{Text=sn2..": "..tostring(val),Color=T.Dim,Transparency=1,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=1005,Position=Vector2.new(WX+xo+6,WY+yo2+4)})
                 local strack=nd("Square",{Filled=true,Color=T.SEP,Transparency=1,ZIndex=1005,Size=Vector2.new(slW,4),Position=Vector2.new(WX+xo+6,WY+yo2+22)})
                 local pct0=((val-mn)/(mx2-mn))
-                local sfill=nd("Square",{Filled=true,Color=T.Pink,Transparency=1,ZIndex=106,Size=Vector2.new(math.max(1,math.floor(pct0*slW)),4),Position=Vector2.new(WX+xo+6,WY+yo2+22)})
+                local sfill=nd("Square",{Filled=true,Color=T.Pink,Transparency=1,ZIndex=1006,Size=Vector2.new(math.max(1,math.floor(pct0*slW)),4),Position=Vector2.new(WX+xo+6,WY+yo2+22)})
 
                 addEl(rbg,xo,yo2,stxt,xo+6,yo2+4,strack,xo+6,yo2+22,sfill,xo+6,yo2+22)
 
@@ -644,8 +644,8 @@ function DrawLib:CreateWindow(cfg)
                 local rbg  =nd("Square",{Filled=true,Color=T.BG,Transparency=1,ZIndex=1004,Size=Vector2.new(colW,34),Position=Vector2.new(WX+xo,WY+yo2)})
                 local dtxt =nd("Text",{Text=dn,Color=T.Dim,Transparency=1,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=1005,Position=Vector2.new(WX+xo+6,WY+yo2+4)})
                 local dbox =nd("Square",{Filled=true,Color=T.SEP,Transparency=1,ZIndex=1005,Size=Vector2.new(colW-12,16),Position=Vector2.new(WX+xo+6,WY+yo2+16)})
-                local dvtxt=nd("Text",{Text=val,Color=T.White,Transparency=1,Size=11,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=106,Position=Vector2.new(WX+xo+9,WY+yo2+18)})
-                local darr =nd("Text",{Text="v",Color=T.Dim,Transparency=1,Size=10,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=106,Position=Vector2.new(WX+xo+colW-20,WY+yo2+18)})
+                local dvtxt=nd("Text",{Text=val,Color=T.White,Transparency=1,Size=11,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=1006,Position=Vector2.new(WX+xo+9,WY+yo2+18)})
+                local darr =nd("Text",{Text="v",Color=T.Dim,Transparency=1,Size=10,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=1006,Position=Vector2.new(WX+xo+colW-20,WY+yo2+18)})
 
                 addEl(rbg,xo,yo2,dtxt,xo+6,yo2+4,dbox,xo+6,yo2+16,dvtxt,xo+9,yo2+18)
                 addEl(darr,xo+colW-20,yo2+18)
@@ -815,7 +815,7 @@ function DrawLib:CreateWindow(cfg)
                 local bcb=bc.Callback or function()end
                 local yo2=isR and rYo or lYo
                 local bbg=nd("Square",{Filled=true,Color=T.SEP,Transparency=1,ZIndex=1005,Size=Vector2.new(colW-12,20),Position=Vector2.new(WX+xo+6,WY+yo2+2)})
-                local btt=nd("Text",{Text=bn,Color=T.White,Transparency=1,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=106,Position=Vector2.new(WX+xo+colW/2-20,WY+yo2+5)})
+                local btt=nd("Text",{Text=bn,Color=T.White,Transparency=1,Size=12,Font=Drawing.Fonts.Gotham,Outline=false,ZIndex=1006,Position=Vector2.new(WX+xo+colW/2-20,WY+yo2+5)})
                 addEl(bbg,xo+6,yo2+2,btt,xo+colW/2-20,yo2+5)
                 addH(xo+6,yo2+2,colW-12,20,function()
                     bbg.Color=T.Pink;task.delay(0.1,function()bbg.Color=T.SEP end)
@@ -846,4 +846,10 @@ if env then
     env.DrawLib = DrawLib
 end
 return DrawLib
+
+
+
+
+
+
 
