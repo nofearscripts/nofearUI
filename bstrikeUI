@@ -1,4 +1,4 @@
--- NoFear Drawing UI Library v9.8
+-- NoFear Drawing UI Library v9.9
 -- Fixed: gpe blocking clicks, slider double-handler, Transparency on tab elements, stars visibility
 -- Fixed: ZIndex layering on high-end executors (Volt), floating UI elements
 -- Added: Mobile touch support (TouchTap, TouchPan for drag/slider)
@@ -87,6 +87,11 @@ function DrawLib:CreateWindow(cfg)
     local glow6 = D("Square",{Filled=false,Color=Color3.fromRGB(255,255,255),Thickness=1,Transparency=0.05,ZIndex=1001,Size=Vector2.new(WW+24,WH+24),Position=Vector2.new(WX-12,WY-12)})
 
     local function reposition()
+        -- Force all chrome drawings visible when repositioning
+        local chromeDrawings = {bg,tbar,ttxt,gtxt,sbar,sbln,cdiv,tbln,bbar,bbln,bbtxt,bord,glow1,glow2,glow3,glow4,glow5,glow6}
+        if visible then
+            for _,d in ipairs(chromeDrawings) do pcall(function() d.Visible=true end) end
+        end
         bg.Size=Vector2.new(WW,WH);           bg.Position=Vector2.new(WX,WY)
         tbar.Size=Vector2.new(WW,TBH);        tbar.Position=Vector2.new(WX,WY)
         ttxt.Position=Vector2.new(WX+10,WY+8)
@@ -160,6 +165,10 @@ function DrawLib:CreateWindow(cfg)
             tab.bg.Color=act and T.Act or T.SB
             tab.acc.Visible=act
             tab.txt.Color=act and T.Pink or T.Dim
+            -- Force tab chrome visible
+            pcall(function() tab.bg.Visible=true end)
+            pcall(function() tab.txt.Visible=true end)
+            if tab.sep then pcall(function() tab.sep.Visible=true end) end
         end
         reposition()
     end
@@ -172,8 +181,8 @@ function DrawLib:CreateWindow(cfg)
             local sx=math.random(WX+SBW+5,WX+WW-15)
             local spd=math.random(50,120)
             local sz=math.random(2,4)
-            local s1=Drawing.new("Square");s1.Filled=true;s1.Color=Color3.new(1,1,1);s1.Transparency=1;s1.Size=Vector2.new(sz,1);s1.ZIndex=120;s1.Visible=true
-            local s2=Drawing.new("Square");s2.Filled=true;s2.Color=Color3.new(1,1,1);s2.Transparency=1;s2.Size=Vector2.new(1,sz);s2.ZIndex=120;s2.Visible=true
+            local s1=Drawing.new("Square");s1.Filled=true;s1.Color=Color3.new(1,1,1);s1.Transparency=1;s1.Size=Vector2.new(sz,1);s1.ZIndex=1020;s1.Visible=true
+            local s2=Drawing.new("Square");s2.Filled=true;s2.Color=Color3.new(1,1,1);s2.Transparency=1;s2.Size=Vector2.new(1,sz);s2.ZIndex=1020;s2.Visible=true
             task.spawn(function()
                 local t2=0;local dur=(WH-TBH-BBH)/spd
                 while t2<dur do
@@ -223,7 +232,7 @@ function DrawLib:CreateWindow(cfg)
         toggleBtn.Filled = true
         toggleBtn.Color = Color3.fromRGB(255,105,180)
         toggleBtn.Transparency = 1
-        toggleBtn.ZIndex = 200
+        toggleBtn.ZIndex = 2010
         toggleBtn.Size = Vector2.new(44, 44)
         toggleBtn.Position = Vector2.new(workspace.CurrentCamera.ViewportSize.X - 52, 8)
         toggleBtn.Visible = true
@@ -233,7 +242,7 @@ function DrawLib:CreateWindow(cfg)
         toggleBtnTxt.Color = Color3.fromRGB(255,255,255)
         toggleBtnTxt.Transparency = 1
         toggleBtnTxt.Size = 14
-        toggleBtnTxt.ZIndex = 201
+        toggleBtnTxt.ZIndex = 2011
         pcall(function() toggleBtnTxt.Font = Drawing.Fonts.GothamBold end)
         toggleBtnTxt.Outline = false
         toggleBtnTxt.Position = Vector2.new(workspace.CurrentCamera.ViewportSize.X - 44, 22)
