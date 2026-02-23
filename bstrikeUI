@@ -1,4 +1,4 @@
--- NoFear Drawing UI Library v9.3
+-- NoFear Drawing UI Library v9.4
 -- Fixed: gpe blocking clicks, slider double-handler, Transparency on tab elements, stars visibility
 -- Fixed: ZIndex layering on high-end executors (Volt), floating UI elements
 -- Added: Mobile touch support (TouchTap, TouchPan for drag/slider)
@@ -377,7 +377,6 @@ function DrawLib:CreateWindow(cfg)
 
         if not justClicked then return end
         if not visible then return end
-        if not ready then return end
 
         -- Drag start: click on title bar
         if my >= WY and my <= WY + TBH and mx >= WX and mx <= WX + WW then
@@ -542,16 +541,15 @@ function DrawLib:CreateWindow(cfg)
         local function addEl(d,ox,oy,d2,ox2,oy2,d3,ox3,oy3,d4,ox4,oy4,isLine,lw,d2isLine,lw2)
             local e={d=d,ox=ox,oy=oy,d2=d2,ox2=ox2,oy2=oy2,d3=d3,ox3=ox3,oy3=oy3,d4=d4,ox4=ox4,oy4=oy4,isLine=isLine,lw=lw,d2isLine=d2isLine,lw2=lw2}
             table.insert(tab.els,e)
-            table.insert(allD,d)
-            if d2 then table.insert(allD,d2) end
-            if d3 then table.insert(allD,d3) end
-            if d4 then table.insert(allD,d4) end
-            -- Start hidden; reposition() will show/clip correctly on next frame
-            pcall(function()d.Visible=false end)
-            if d2 then pcall(function()d2.Visible=false end) end
-            if d3 then pcall(function()d3.Visible=false end) end
-            if d4 then pcall(function()d4.Visible=false end) end
-            -- Do NOT call reposition() here — it corrupts state during tab construction
+            -- Only add to allD if not already there
+            local function addIfNew(dr)
+                if not dr then return end
+                local found = false
+                for _, v in ipairs(allD) do if v == dr then found = true; break end end
+                if not found then table.insert(allD, dr) end
+                pcall(function() dr.Visible = false end)
+            end
+            addIfNew(d); addIfNew(d2); addIfNew(d3); addIfNew(d4)
         end
 
         local function addH(ox,oy,w,h,fn)
@@ -570,6 +568,8 @@ function DrawLib:CreateWindow(cfg)
             local hacc = nd("Square",{Filled=true,Color=T.Pink,Transparency=1,ZIndex=105,Size=Vector2.new(3,14),Position=Vector2.new(WX+xo,WY+yo+3)})
             local htxt = nd("Text",{Text=sn,Color=T.White,Transparency=1,Size=13,Font=Drawing.Fonts.GothamBold,Outline=false,ZIndex=105,Position=Vector2.new(WX+xo+8,WY+yo+3)})
             local hsep = nd("Line",{Color=T.SEP,Thickness=1,Transparency=1,ZIndex=104,From=Vector2.new(WX+xo,WY+yo+20),To=Vector2.new(WX+xo+colW,WY+yo+20)})
+            -- Add section drawings to allD so setVisible() can toggle them
+            table.insert(allD, hbg); table.insert(allD, hacc); table.insert(allD, htxt); table.insert(allD, hsep)
             addEl(hbg,xo,yo,hacc,xo,yo+3,htxt,xo+8,yo+3)
             addEl(hsep,xo,yo+20,nil,nil,nil,nil,nil,nil,nil,nil,nil,true,colW)
             if isR then rYo=yo+24 else lYo=yo+24 end
