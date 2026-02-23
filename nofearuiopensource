@@ -1,6 +1,6 @@
 
 --// ============================================================
---// NO.FEAR UI LIBRARY v1.0
+--// NO.FEAR UI LIBRARY v1.1 - Added mobile touch support
 --// ============================================================
 -- Usage:
 --   local UI = loadstring(game:HttpGet("...NoFear_UILib.lua"))()
@@ -105,19 +105,21 @@ local function btn(parent, props)
 end
 
 -- ── Drag ──────────────────────────────────────────────────────
-local function makeDraggable(topBar, frame)
+local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+local function makeDraggable(topBar, mainFrame)
     local dragging, dragStart, startPos
+    -- Mouse drag
     topBar.InputBegan:Connect(function(i)
         if i.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             dragStart = i.Position
-            startPos = frame.Position
+            startPos = mainFrame.Position
         end
     end)
     UserInputService.InputChanged:Connect(function(i)
         if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = i.Position - dragStart
-            frame.Position = UDim2.new(
+            mainFrame.Position = UDim2.new(
                 startPos.X.Scale, startPos.X.Offset + delta.X,
                 startPos.Y.Scale, startPos.Y.Offset + delta.Y
             )
@@ -125,6 +127,28 @@ local function makeDraggable(topBar, frame)
     end)
     UserInputService.InputEnded:Connect(function(i)
         if i.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    -- Touch drag
+    topBar.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = i.Position
+            startPos = mainFrame.Position
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(i)
+        if dragging and i.UserInputType == Enum.UserInputType.Touch then
+            local delta = i.Position - dragStart
+            mainFrame.Position = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + delta.X,
+                startPos.Y.Scale, startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.Touch then
             dragging = false
         end
     end)
@@ -613,6 +637,19 @@ function UILib:CreateWindow(cfg)
                 UserInputService.InputEnded:Connect(function(i)
                     if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
                 end)
+                -- Touch support for slider
+                trackBtn.InputBegan:Connect(function(i)
+                    if i.UserInputType == Enum.UserInputType.Touch then
+                        dragging = true
+                        update(i.Position.X)
+                    end
+                end)
+                UserInputService.InputChanged:Connect(function(i)
+                    if dragging and i.UserInputType == Enum.UserInputType.Touch then update(i.Position.X) end
+                end)
+                UserInputService.InputEnded:Connect(function(i)
+                    if i.UserInputType == Enum.UserInputType.Touch then dragging = false end
+                end)
 
                 local obj = {}
                 function obj:Get() return val end
@@ -663,7 +700,47 @@ function UILib:CreateWindow(cfg)
         end
     end)
 
+    -- Mobile toggle button (only shown on touch devices)
+    if isMobile then
+        local mobileBtn = Instance.new("TextButton", Gui)
+        mobileBtn.Size = UDim2.new(0,48,0,48)
+        mobileBtn.Position = UDim2.new(1,-58,0,10)
+        mobileBtn.BackgroundColor3 = T.Pink
+        mobileBtn.BorderSizePixel = 0
+        mobileBtn.Text = "NF"
+        mobileBtn.TextColor3 = Color3.fromRGB(255,255,255)
+        mobileBtn.TextSize = 14
+        mobileBtn.Font = T.FontBlack
+        mobileBtn.ZIndex = 999
+        mobileBtn.AutoButtonColor = false
+        Instance.new("UICorner", mobileBtn).CornerRadius = UDim.new(0,12)
+        local mbStroke = Instance.new("UIStroke", mobileBtn)
+        mbStroke.Color = Color3.fromRGB(255,255,255)
+        mbStroke.Thickness = 1
+        mbStroke.Transparency = 0.7
+        mobileBtn.MouseButton1Click:Connect(function()
+            Main.Visible = not Main.Visible
+        end)
+        -- Make mobile button draggable
+        local mbDrag, mbDragStart, mbStartPos
+        mobileBtn.InputBegan:Connect(function(i)
+            if i.UserInputType == Enum.UserInputType.Touch then
+                mbDrag = true; mbDragStart = i.Position; mbStartPos = mobileBtn.Position
+            end
+        end)
+        UserInputService.InputChanged:Connect(function(i)
+            if mbDrag and i.UserInputType == Enum.UserInputType.Touch then
+                local d = i.Position - mbDragStart
+                mobileBtn.Position = UDim2.new(mbStartPos.X.Scale, mbStartPos.X.Offset+d.X, mbStartPos.Y.Scale, mbStartPos.Y.Offset+d.Y)
+            end
+        end)
+        UserInputService.InputEnded:Connect(function(i)
+            if i.UserInputType == Enum.UserInputType.Touch then mbDrag = false end
+        end)
+    end
+
     return W
 end
 
 return UILib
+
