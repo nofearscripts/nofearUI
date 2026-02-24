@@ -1,8 +1,6 @@
 --// ============================================================
 --// NO.FEAR LOADER v2.1 (Key System + CounterAPI + PoP Heartbeat)
 --// ============================================================
---//
---//
 --// Key System: https://nofear.up.railway.app/keysystem
 --// Discord:    https://discord.gg/G9QSXsB9wY
 --// ============================================================
@@ -98,37 +96,116 @@ local function httpPost(url, body)
     return raw
 end
 
--- ── NebulAuth PoP Session Heartbeat ──────────────────────────────────────────
-local NEBUL_VERIFY_URL = "https://api.nebulauth.com/api/v1/keys/verify"
-local NEBUL_VERIFY_TOKEN = "mk_at_MmkJlk0PhXlrFBo3qlR6xtyXShUm9yzcADtYYVuydfA"
-local HEARTBEAT_INTERVAL = 120 -- 2 minutes
+-- ── NebulAuth PoP Session ────────────────────────────────────────────────────
+local NEBUL_BASE          = "https://api.nebulauth.com"
+local NEBUL_VERIFY_TOKEN  = "mk_at_MmkJlk0PhXlrFBo3qlR6xtyXShUm9yzcADtYYVuydfA"
+local HEARTBEAT_INTERVAL  = 120 -- 2 minutes
+
+-- HMAC-SHA256 signing using Roblox's built-in HMAC (available in executors)
+local function hmacSHA256(key, message)
+    -- Try executor-provided crypto first
+    local ok, result = pcall(function()
+        return crypt and crypt.hmac and crypt.hmac(crypt.sha256, message, key)
+    end)
+    if ok and result then return result end
+    -- Fallback: use syn.crypt or similar
+    local ok2, result2 = pcall(function()
+        return syn and syn.crypt and syn.crypt.hmac(syn.crypt.sha256, message, key)
+    end)
+    if ok2 and result2 then return result2 end
+    return nil
+end
+
+local function base64UrlDecode(s)
+    s = s:gsub("-", "+"):gsub("_", "/")
+    local pad = (4 - #s % 4) % 4
+    s = s .. string.rep("=", pad)
+    local ok, result = pcall(function()
+        return crypt and crypt.base64decode and crypt.base64decode(s)
+    end)
+    if ok and result then return result end
+    return s -- fallback raw
+end
+
+local function makeNonce()
+    return HttpService:GenerateGUID(false):gsub("-", ""):sub(1, 16)
+end
+
+local function doRequest(url, method, headers, body)
+    if request then
+        local ok, res = pcall(function()
+            return request({ Url = url, Method = method, Headers = headers, Body = body or "" })
+        end)
+        if ok and res then return res.Body end
+    else
+        local ok, res = pcall(function()
+            return HttpService:RequestAsync({ Url = url, Method = method, Headers = headers, Body = body or "" })
+        end)
+        if ok and res then return res.Body end
+    end
+    return nil
+end
 
 local function startPopHeartbeat(key)
     task.spawn(function()
+        -- Step 1: Bootstrap — get accessToken + popKey
+        local bootstrapBody = HttpService:JSONEncode({
+            key = key,
+            hwid = HWID,
+            requestId = HttpService:GenerateGUID(false)
+        })
+        local bootstrapRaw = doRequest(
+            NEBUL_BASE .. "/api/v1/auth/verify",
+            "POST",
+            {
+                ["Content-Type"] = "application/json",
+                ["Authorization"] = "Bearer " .. NEBUL_VERIFY_TOKEN
+            },
+            bootstrapBody
+        )
+        if not bootstrapRaw then return end
+        local ok, bootstrap = pcall(HttpService.JSONDecode, HttpService, bootstrapRaw)
+        if not ok or not bootstrap or not bootstrap.valid then return end
+
+        local accessToken = bootstrap.accessToken
+        local popKey = base64UrlDecode(bootstrap.popKey or "")
+        if not accessToken or not popKey then return end
+
+        -- Step 2: Heartbeat loop using PoP session
         while true do
             task.wait(HEARTBEAT_INTERVAL)
             pcall(function()
+                local path = "/api/v1/keys/verify"
+                local method = "POST"
+                local timestamp = tostring(math.floor(os.time() * 1000))
+                local nonce = makeNonce()
                 local body = HttpService:JSONEncode({
                     key = key,
                     requestId = HttpService:GenerateGUID(false)
                 })
-                if request then
-                    request({
-                        Url = NEBUL_VERIFY_URL,
-                        Method = "POST",
-                        Headers = {
-                            ["Content-Type"] = "application/json",
-                            ["Authorization"] = "Bearer " .. NEBUL_VERIFY_TOKEN,
-                            ["X-Hwid"] = HWID
-                        },
-                        Body = body
-                    })
-                else
-                    HttpService:PostAsync(NEBUL_VERIFY_URL, body, Enum.HttpContentType.ApplicationJson, false, {
-                        ["Authorization"] = "Bearer " .. NEBUL_VERIFY_TOKEN,
+                -- SHA256 of body
+                local bodySha = ""
+                pcall(function()
+                    bodySha = crypt and crypt.sha256 and crypt.sha256(body) or ""
+                end)
+                -- Canonical string: METHOD\nPATH\nTIMESTAMP_MS\nNONCE\nSHA256_HEX(BODY)
+                local canonical = method .. "\n" .. path .. "\n" .. timestamp .. "\n" .. nonce .. "\n" .. bodySha
+                -- Sign with popKey
+                local signature = hmacSHA256(popKey, canonical) or ""
+
+                doRequest(
+                    NEBUL_BASE .. path,
+                    method,
+                    {
+                        ["Content-Type"] = "application/json",
+                        ["Authorization"] = "Bearer " .. accessToken,
+                        ["X-Timestamp"] = timestamp,
+                        ["X-Nonce"] = nonce,
+                        ["X-Signature"] = signature,
                         ["X-Hwid"] = HWID
-                    })
-                end
+                    },
+                    body
+                )
             end)
         end
     end)
