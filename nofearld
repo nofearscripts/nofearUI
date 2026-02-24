@@ -1,5 +1,5 @@
 --// ============================================================
---// NO.FEAR LOADER v2.0 (Key System + CounterAPI)
+--// NO.FEAR LOADER v2.1 (Key System + CounterAPI + PoP Heartbeat)
 --// ============================================================
 --//
 --//
@@ -96,6 +96,42 @@ local function httpPost(url, body)
     end
     if not ok then return nil end
     return raw
+end
+
+-- ── NebulAuth PoP Session Heartbeat ──────────────────────────────────────────
+local NEBUL_VERIFY_URL = "https://api.nebulauth.com/api/v1/keys/verify"
+local NEBUL_VERIFY_TOKEN = "mk_at_MmkJlk0PhXlrFBo3qlR6xtyXShUm9yzcADtYYVuydfA"
+local HEARTBEAT_INTERVAL = 120 -- 2 minutes
+
+local function startPopHeartbeat(key)
+    task.spawn(function()
+        while true do
+            task.wait(HEARTBEAT_INTERVAL)
+            pcall(function()
+                local body = HttpService:JSONEncode({
+                    key = key,
+                    requestId = HttpService:GenerateGUID(false)
+                })
+                if request then
+                    request({
+                        Url = NEBUL_VERIFY_URL,
+                        Method = "POST",
+                        Headers = {
+                            ["Content-Type"] = "application/json",
+                            ["Authorization"] = "Bearer " .. NEBUL_VERIFY_TOKEN,
+                            ["X-Hwid"] = HWID
+                        },
+                        Body = body
+                    })
+                else
+                    HttpService:PostAsync(NEBUL_VERIFY_URL, body, Enum.HttpContentType.ApplicationJson, false, {
+                        ["Authorization"] = "Bearer " .. NEBUL_VERIFY_TOKEN,
+                        ["X-Hwid"] = HWID
+                    })
+                end
+            end)
+        end
+    end)
 end
 
 local function validateKey(key)
@@ -538,6 +574,10 @@ local function runWithKeyCheck(callback)
         local valid, msg = validateKey(cached)
         if valid then
             print("[NoFear] ✅ " .. msg)
+            -- Start PoP heartbeat for mk_live_ keys
+            if cached:match("^mk_") then
+                startPopHeartbeat(cached)
+            end
             callback()
             return
         else
@@ -550,6 +590,11 @@ local function runWithKeyCheck(callback)
     print("[NoFear] 🔑 Key required — showing key UI")
     createKeyUI(function()
         print("[NoFear] ✅ Key accepted — loading " .. ScriptName)
+        -- Start PoP heartbeat after key UI success
+        local savedKey = readSavedKey()
+        if savedKey and savedKey:match("^mk_") then
+            startPopHeartbeat(savedKey)
+        end
         callback()
     end)
 end
@@ -569,3 +614,4 @@ else
     -- Module mode: return runWithKeyCheck so the calling script can use it
     return runWithKeyCheck
 end
+
