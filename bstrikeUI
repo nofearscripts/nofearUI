@@ -1,5 +1,7 @@
 -- NoFear Drawing UI Library v9.9
 -- Fixed: gpe blocking clicks, slider double-handler, Transparency on tab elements, stars visibility
+-- Fixed: ZIndex layering on high-end executors (Volt), floating UI elements
+-- Added: Mobile touch support (TouchTap, TouchPan for drag/slider)
 
 local DrawLib = {}
 local UIS = game:GetService("UserInputService")
