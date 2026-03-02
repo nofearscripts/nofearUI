@@ -1,5 +1,5 @@
 --// ============================================================
---// NO.FEAR LOADER v2.1 (Key System + CounterAPI + PoP Heartbeat)
+--// NO.FEAR LOADER v2.1 (Key System + CounterAPI + PoP Heartbeat
 --// ============================================================
 --// Key System: https://nofear.up.railway.app/keysystem
 --// Discord:    https://discord.gg/G9QSXsB9wY
@@ -263,8 +263,9 @@ local function validateKey(key)
         local ok, decoded = pcall(HttpService.JSONDecode, HttpService, raw)
         if ok and decoded then
             if decoded.valid then
-                if decoded.expires_at and decoded.expires_at > 0 then
-                    local diff  = math.max(0, math.floor(decoded.expires_at / 1000) - os.time())
+                local expiresAt = tonumber(decoded.expires_at)
+                if expiresAt and expiresAt > 0 then
+                    local diff  = math.max(0, math.floor(expiresAt / 1000) - os.time())
                     local hours = math.floor(diff / 3600)
                     local mins  = math.floor((diff % 3600) / 60)
                     return true, string.format("Key valid - expires in %dh %dm", hours, mins)
