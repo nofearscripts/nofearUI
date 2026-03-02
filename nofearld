@@ -1,5 +1,5 @@
 --// ============================================================
---// NO.FEAR LOADER v2.1 (Key System + CounterAPI + PoP Heartbeat)
+--// NO.FEAR LOADER v2.1 (Key System +  PoP Heartbeat)
 --// ============================================================
 --// Key System: https://nofear.up.railway.app/keysystem
 --// Discord:    https://discord.gg/G9QSXsB9wY
@@ -20,7 +20,7 @@ local ScriptName = _env.ScriptName or "NoFear"
 --// ============================================================
 local CounterNamespace = "NoFear_BlockSpin"
 local CounterKey       = "executions"
-local KEY_SERVER       = "https://nofear.up.railway.app"
+local KEY_SERVER       = "https://nofear-proxy.gramovelook.workers.dev"
 local KEY_PAGE         = KEY_SERVER .. "/keysystem"
 local KEY_SAVE_FILE    = "nofear_key.txt"
 
