@@ -1,8 +1,6 @@
 --// ============================================================
 --// NO.FEAR LOADER v2.1 (Key System + CounterAPI + PoP Heartbeat)
 --// ============================================================
---//
---//
 --// Key System: https://nofear.up.railway.app/keysystem
 --// Discord:    https://discord.gg/G9QSXsB9wY
 --// ============================================================
@@ -621,7 +619,28 @@ local function createKeyUI(onSuccess)
         end
         EnterBtn.Text = "Checking..."
         StatusLabel.Text = ""
-        local valid, msg = validateKey(key)
+
+        -- Run validateKey with a 12 second timeout to prevent infinite "Checking..." freeze
+        local valid, msg = false, "Server timed out. Try again."
+        local done = false
+
+        task.spawn(function()
+            local ok, v, m = pcall(validateKey, key)
+            if ok then
+                valid, msg = v, m
+            else
+                valid, msg = false, "Error: " .. tostring(v)
+            end
+            done = true
+        end)
+
+        -- Wait up to 12 seconds
+        local elapsed = 0
+        while not done and elapsed < 12 do
+            task.wait(0.1)
+            elapsed = elapsed + 0.1
+        end
+
         if valid then
             saveKey(key)
             StatusLabel.TextColor3 = Color3.fromRGB(80,200,120)
@@ -632,7 +651,7 @@ local function createKeyUI(onSuccess)
             onSuccess()
         else
             StatusLabel.TextColor3 = Color3.fromRGB(220,70,70)
-            StatusLabel.Text = msg
+            StatusLabel.Text = msg or "Invalid key."
             EnterBtn.Text = "Enter"
             busy = false
         end
@@ -693,4 +712,5 @@ else
     -- Module mode: return runWithKeyCheck so the calling script can use it
     return runWithKeyCheck
 end
+
 
