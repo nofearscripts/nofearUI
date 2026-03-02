@@ -1,13 +1,4 @@
---// ============================================================
 --// NO.FEAR LOADER v2.1 (Key System + CounterAPI + PoP Heartbeat
---// ============================================================
---// Key System: https://nofear.up.railway.app/keysystem
---// Discord:    https://discord.gg/G9QSXsB9wY
---// ============================================================
-
---// ============================================================
---// CONFIG — Overrideable by calling script via getfenv()
---// ============================================================
 -- Per-game loaders set these before calling loadstring(loader)():
 --   getfenv().ScriptURL  = "https://raw.github.com/.../main.lua"
 --   getfenv().ScriptName = "Rivals"
@@ -21,7 +12,7 @@ local ScriptName = _env.ScriptName or "NoFear"
 local CounterNamespace = "NoFear_BlockSpin"
 local CounterKey       = "executions"
 local KEY_SERVER       = "https://nofear-proxy.gramovelook.workers.dev"
-local KEY_PAGE         = KEY_SERVER .. "/keysystem"
+local KEY_PAGE         = "https://nofear.up.railway.app/keysystem"
 local KEY_SAVE_FILE    = "nofear_key.txt"
 
 local HttpService = game:GetService("HttpService")
@@ -741,5 +732,6 @@ else
     -- Module mode: return runWithKeyCheck so the calling script can use it
     return runWithKeyCheck
 end
+
 
 
