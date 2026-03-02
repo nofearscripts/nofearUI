@@ -1,5 +1,5 @@
 --// ============================================================
---// NO.FEAR LOADER v2.1 (Key System + CounterAPI)
+--// NO.FEAR LOADER v2.1 (Key System + CounterAPI + PoP Heartbeat)
 --// ============================================================
 --// Key System: https://nofear.up.railway.app/keysystem
 --// Discord:    https://discord.gg/G9QSXsB9wY
@@ -296,6 +296,28 @@ local function destroyExisting()
     local cg = game:GetService("CoreGui")
     pcall(function() local e = cg:FindFirstChild("NoFearKeySystem"); if e then e:Destroy() end end)
     pcall(function() local h = gethui():FindFirstChild("NoFearKeySystem"); if h then h:Destroy() end end)
+end
+
+local function validateKeyWithTimeout(key)
+    local valid, msg = false, "Server timed out. Try again."
+    local done = false
+    task.spawn(function()
+        local results = table.pack(pcall(validateKey, key))
+        if results[1] then
+            valid = results[2]
+            msg = results[3]
+        else
+            valid = false
+            msg = "Server timed out. Try again."
+        end
+        done = true
+    end)
+    local elapsed = 0
+    while not done and elapsed < 12 do
+        task.wait(0.1)
+        elapsed = elapsed + 0.1
+    end
+    return valid, msg
 end
 
 local function createKeyUI(onSuccess)
@@ -687,28 +709,6 @@ local function createKeyUI(onSuccess)
         task.wait(2)
         CopyBtn.Text = "Copy Key Link"
     end)
-end
-
-local function validateKeyWithTimeout(key)
-    local valid, msg = false, "Server timed out. Try again."
-    local done = false
-    task.spawn(function()
-        local results = table.pack(pcall(validateKey, key))
-        if results[1] then
-            valid = results[2]
-            msg = results[3]
-        else
-            valid = false
-            msg = "Server timed out. Try again."
-        end
-        done = true
-    end)
-    local elapsed = 0
-    while not done and elapsed < 12 do
-        task.wait(0.1)
-        elapsed = elapsed + 0.1
-    end
-    return valid, msg
 end
 
 local function runWithKeyCheck(callback)
