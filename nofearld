@@ -1,5 +1,5 @@
 --// ============================================================
---// NO.FEAR LOADER v2.1 (Key System + CounterAPI + PoP Heartbeat
+--// NO.FEAR LOADER v2.1 (Key System + CounterAPI + PoP Heartbeat)
 --// ============================================================
 --// Key System: https://nofear.up.railway.app/keysystem
 --// Discord:    https://discord.gg/G9QSXsB9wY
@@ -625,11 +625,15 @@ local function createKeyUI(onSuccess)
         local done = false
 
         task.spawn(function()
-            local ok, v, m = pcall(validateKey, key)
-            if ok then
-                valid, msg = v, m
+            local results = table.pack(pcall(validateKey, key))
+            if results[1] then
+                -- pcall succeeded, results[2] = valid, results[3] = msg
+                valid = results[2]
+                msg = results[3]
             else
-                valid, msg = false, "Error: " .. tostring(v)
+                -- pcall itself errored
+                valid = false
+                msg = "Server timed out. Try again."
             end
             done = true
         end)
