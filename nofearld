@@ -1,5 +1,5 @@
 --// ============================================================
---// NO.FEAR LOADER v2.1 (Key System + CounterAPI + PoP Heartbeat
+--// NO.FEAR LOADER v2.1 (Key System + CounterAPI + PoP Heartbeat)
 --// ============================================================
 --// Key System: https://nofear.up.railway.app/keysystem
 --// Discord:    https://discord.gg/G9QSXsB9wY
@@ -132,18 +132,39 @@ local function makeNonce()
 end
 
 local function doRequest(url, method, headers, body)
-    if request then
-        local ok, res = pcall(function()
-            return request({ Url = url, Method = method, Headers = headers, Body = body or "" })
-        end)
-        if ok and res then return res.Body end
-    else
-        local ok, res = pcall(function()
-            return HttpService:RequestAsync({ Url = url, Method = method, Headers = headers, Body = body or "" })
-        end)
-        if ok and res then return res.Body end
+    local result = nil
+    local done = false
+
+    task.spawn(function()
+        local ok, res
+        if request then
+            ok, res = pcall(function()
+                return request({ Url = url, Method = method, Headers = headers, Body = body or "" })
+            end)
+            if ok and res then result = res.Body end
+        end
+        -- Fallback to HttpService if request not available or failed
+        if not result then
+            ok, res = pcall(function()
+                if method == "POST" then
+                    return HttpService:PostAsync(url, body or "", Enum.HttpContentType.ApplicationJson, false)
+                else
+                    return HttpService:GetAsync(url, false)
+                end
+            end)
+            if ok and res then result = res end
+        end
+        done = true
+    end)
+
+    -- Wait max 8 seconds per request
+    local elapsed = 0
+    while not done and elapsed < 8 do
+        task.wait(0.1)
+        elapsed = elapsed + 0.1
     end
-    return nil
+
+    return result
 end
 
 local function startPopHeartbeat(key)
