@@ -1,5 +1,5 @@
 --// ============================================================
---// NO.FEAR LOADER v2.1 (Key System +  PoP Heartbeat)
+--// NO.FEAR LOADER v2.1 (Key System + CounterAPI + PoP Heartbeat)
 --// ============================================================
 --// Key System: https://nofear.up.railway.app/keysystem
 --// Discord:    https://discord.gg/G9QSXsB9wY
@@ -81,37 +81,37 @@ end
 local HWID = getHWID()
 
 local function httpPost(url, body)
-    local result = nil
-    local done = false
-
-    task.spawn(function()
-        -- Try executor request() first
-        if request then
-            local ok, res = pcall(function()
-                return request({ Url = url, Method = "POST", Headers = { ["Content-Type"] = "application/json" }, Body = body or "" })
-            end)
-            if ok and res and res.Body then
-                result = res.Body
-                done = true
-                return
-            end
+    -- Try executor request() first
+    if request then
+        local ok, res = pcall(request, { Url = url, Method = "POST", Headers = { ["Content-Type"] = "application/json" }, Body = body or "" })
+        if ok and res and res.Body and #res.Body > 0 then
+            return res.Body
         end
-        -- Fallback: HttpService:PostAsync (works on Xeno natively)
-        local ok2, res2 = pcall(function()
-            return HttpService:PostAsync(url, body or "", Enum.HttpContentType.ApplicationJson, false)
-        end)
-        if ok2 and res2 then result = res2 end
-        done = true
-    end)
-
-    -- Wait max 8 seconds
-    local elapsed = 0
-    while not done and elapsed < 8 do
-        task.wait(0.1)
-        elapsed = elapsed + 0.1
     end
 
-    return result
+    -- Try http_request (some executors use this)
+    if http_request then
+        local ok, res = pcall(http_request, { Url = url, Method = "POST", Headers = { ["Content-Type"] = "application/json" }, Body = body or "" })
+        if ok and res and res.Body and #res.Body > 0 then
+            return res.Body
+        end
+    end
+
+    -- Try syn.request (Synapse)
+    if syn and syn.request then
+        local ok, res = pcall(syn.request, { Url = url, Method = "POST", Headers = { ["Content-Type"] = "application/json" }, Body = body or "" })
+        if ok and res and res.Body and #res.Body > 0 then
+            return res.Body
+        end
+    end
+
+    -- Fallback: HttpService:PostAsync
+    local ok, res = pcall(function()
+        return HttpService:PostAsync(url, body or "", Enum.HttpContentType.ApplicationJson, false)
+    end)
+    if ok and res and #res > 0 then return res end
+
+    return nil
 end
 
 -- ── NebulAuth PoP Session ────────────────────────────────────────────────────
@@ -299,25 +299,11 @@ local function destroyExisting()
 end
 
 local function validateKeyWithTimeout(key)
-    local valid, msg = false, "Server timed out. Try again."
-    local done = false
-    task.spawn(function()
-        local results = table.pack(pcall(validateKey, key))
-        if results[1] then
-            valid = results[2]
-            msg = results[3]
-        else
-            valid = false
-            msg = "Server timed out. Try again."
-        end
-        done = true
-    end)
-    local elapsed = 0
-    while not done and elapsed < 12 do
-        task.wait(0.1)
-        elapsed = elapsed + 0.1
+    local ok, valid, msg = pcall(validateKey, key)
+    if ok then
+        return valid, msg
     end
-    return valid, msg
+    return false, "Error validating key. Try again."
 end
 
 local function createKeyUI(onSuccess)
@@ -681,11 +667,7 @@ local function createKeyUI(onSuccess)
         EnterBtn.Text = "Checking..."
         StatusLabel.Text = ""
 
-        -- Run validateKey with a 12 second timeout to prevent infinite "Checking..." freeze
-        local valid, msg = false, "Server timed out. Try again."
-        local done = false
-
-        valid, msg = validateKeyWithTimeout(key)
+        local valid, msg = validateKeyWithTimeout(key)
 
         if valid then
             saveKey(key)
