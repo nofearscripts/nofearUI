@@ -1,5 +1,5 @@
 --// ============================================================
---// NO.FEAR LOADER v2.1 (Key System + CounterAPI + PoP Heartbeat)
+--// NO.FEAR LOADER v2.1 (Key System + CounterAPI + PoP Heartbeat
 --// ============================================================
 --// Key System: https://nofear.up.railway.app/keysystem
 --// Discord:    https://discord.gg/G9QSXsB9wY
@@ -624,26 +624,7 @@ local function createKeyUI(onSuccess)
         local valid, msg = false, "Server timed out. Try again."
         local done = false
 
-        task.spawn(function()
-            local results = table.pack(pcall(validateKey, key))
-            if results[1] then
-                -- pcall succeeded, results[2] = valid, results[3] = msg
-                valid = results[2]
-                msg = results[3]
-            else
-                -- pcall itself errored
-                valid = false
-                msg = "Server timed out. Try again."
-            end
-            done = true
-        end)
-
-        -- Wait up to 12 seconds
-        local elapsed = 0
-        while not done and elapsed < 12 do
-            task.wait(0.1)
-            elapsed = elapsed + 0.1
-        end
+        valid, msg = validateKeyWithTimeout(key)
 
         if valid then
             saveKey(key)
@@ -669,13 +650,35 @@ local function createKeyUI(onSuccess)
     end)
 end
 
+local function validateKeyWithTimeout(key)
+    local valid, msg = false, "Server timed out. Try again."
+    local done = false
+    task.spawn(function()
+        local results = table.pack(pcall(validateKey, key))
+        if results[1] then
+            valid = results[2]
+            msg = results[3]
+        else
+            valid = false
+            msg = "Server timed out. Try again."
+        end
+        done = true
+    end)
+    local elapsed = 0
+    while not done and elapsed < 12 do
+        task.wait(0.1)
+        elapsed = elapsed + 0.1
+    end
+    return valid, msg
+end
+
 local function runWithKeyCheck(callback)
     -- 1. Try cached key
     local cached = readSavedKey()
     if cached and #cached > 5 then
-        local valid, msg = validateKey(cached)
+        local valid, msg = validateKeyWithTimeout(cached)
         if valid then
-            print("[NoFear] ✅ " .. msg)
+            print("[NoFear] Key valid: " .. tostring(msg))
             -- Start PoP heartbeat for mk_live_ keys
             if cached:match("^mk_") then
                 startPopHeartbeat(cached)
@@ -683,15 +686,15 @@ local function runWithKeyCheck(callback)
             callback()
             return
         else
-            print("[NoFear] ⚠ Cached key invalid: " .. msg)
+            print("[NoFear] Cached key invalid: " .. tostring(msg))
             clearSavedKey()
         end
     end
 
     -- 2. Show key UI, run callback after success
-    print("[NoFear] 🔑 Key required — showing key UI")
+    print("[NoFear] Key required - showing key UI")
     createKeyUI(function()
-        print("[NoFear] ✅ Key accepted — loading " .. ScriptName)
+        print("[NoFear] Key accepted - loading " .. ScriptName)
         -- Start PoP heartbeat after key UI success
         local savedKey = readSavedKey()
         if savedKey and savedKey:match("^mk_") then
