@@ -81,19 +81,37 @@ end
 local HWID = getHWID()
 
 local function httpPost(url, body)
-    local raw, ok
-    if request then
-        ok, raw = pcall(function()
-            local res = request({ Url = url, Method = "POST", Headers = { ["Content-Type"] = "application/json" }, Body = body })
-            return res.Body
+    local result = nil
+    local done = false
+
+    task.spawn(function()
+        -- Try executor request() first
+        if request then
+            local ok, res = pcall(function()
+                return request({ Url = url, Method = "POST", Headers = { ["Content-Type"] = "application/json" }, Body = body or "" })
+            end)
+            if ok and res and res.Body then
+                result = res.Body
+                done = true
+                return
+            end
+        end
+        -- Fallback: HttpService:PostAsync (works on Xeno natively)
+        local ok2, res2 = pcall(function()
+            return HttpService:PostAsync(url, body or "", Enum.HttpContentType.ApplicationJson, false)
         end)
-    else
-        ok, raw = pcall(function()
-            return HttpService:PostAsync(url, body, Enum.HttpContentType.ApplicationJson, false)
-        end)
+        if ok2 and res2 then result = res2 end
+        done = true
+    end)
+
+    -- Wait max 8 seconds
+    local elapsed = 0
+    while not done and elapsed < 8 do
+        task.wait(0.1)
+        elapsed = elapsed + 0.1
     end
-    if not ok then return nil end
-    return raw
+
+    return result
 end
 
 -- ── NebulAuth PoP Session ────────────────────────────────────────────────────
