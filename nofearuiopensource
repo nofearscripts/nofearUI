@@ -1,18 +1,5 @@
 
---// ============================================================
---// NO.FEAR UI LIBRARY v1.1 - Added mobile touch support
---// ============================================================
--- Usage:
---   local UI = loadstring(game:HttpGet("...NoFear_UILib.lua"))()
---   local Window = UI:CreateWindow({ Title = "NoFear", Game = "Rivals", Version = "v1.0" })
---   local Tab = Window:AddTab({ Name = "Combat", Icon = "rbxassetid://..." })
---   local Section = Tab:AddSection("Aimbot")
---   Section:AddToggle({ Name = "Silent Aim", Default = false, Callback = function(v) end })
---   Section:AddSlider({ Name = "FOV", Min = 1, Max = 500, Default = 100, Callback = function(v) end })
---   Section:AddDropdown({ Name = "Mode", Options = {"A","B"}, Default = "A", Callback = function(v) end })
---   Section:AddLabel({ Text = "Warning!", Color = Color3.fromRGB(255,80,80) })
---   Section:AddButton({ Name = "Teleport", Callback = function() end })
--- ============================================================
+--// NO.FEAR UI LIBRARY v1.3
 
 local UILib = {}
 UILib.__index = UILib
@@ -33,13 +20,13 @@ local T = {
     TopBar      = Color3.fromRGB(22, 22, 22),    -- top bar
     BottomBar   = Color3.fromRGB(20, 20, 20),    -- bottom bar
     Divider     = Color3.fromRGB(42, 42, 42),    -- 1px lines
-    Pink        = Color3.fromRGB(255, 107, 157), -- primary accent
-    PinkDark    = Color3.fromRGB(180, 60, 110),  -- darker pink
-    Text        = Color3.fromRGB(220, 220, 220), -- main text
+    Pink        = Color3.fromRGB(220, 30, 30), -- primary accent (red)
+    PinkDark    = Color3.fromRGB(160, 20, 20),  -- darker red
+    Text        = Color3.fromRGB(255, 255, 255), -- main text (pure white)
     TextDim     = Color3.fromRGB(120, 120, 120), -- dim text
     TextOff     = Color3.fromRGB(70, 70, 70),    -- disabled text
     ToggleOff   = Color3.fromRGB(55, 55, 55),    -- toggle off bg
-    ToggleOn    = Color3.fromRGB(255, 107, 157), -- toggle on bg
+    ToggleOn    = Color3.fromRGB(220, 30, 30),   -- toggle on bg (red)
     SliderBG    = Color3.fromRGB(45, 45, 45),    -- slider track
     DropBG      = Color3.fromRGB(32, 32, 32),    -- dropdown bg
     Font        = Enum.Font.GothamSemibold,
@@ -194,42 +181,7 @@ function UILib:CreateWindow(cfg)
     Main.ClipsDescendants = false
     Main.Parent = Gui
     makecorner(Main, 6)
-
-    -- Layered border glow — 3 strokes at increasing thickness + transparency
-    local g1 = Instance.new("UIStroke", Main)
-    g1.Color = Color3.fromRGB(255,255,255); g1.Thickness = 2; g1.Transparency = 0.55; g1.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-
-    local glowFrame2 = Instance.new("Frame", Gui)
-    glowFrame2.BackgroundTransparency = 1
-    glowFrame2.Size = UDim2.new(0,708,0,528)
-    glowFrame2.Position = UDim2.new(0.5,-354,0.5,-264)
-    glowFrame2.ZIndex = 1
-    glowFrame2.BorderSizePixel = 0
-    Instance.new("UICorner",glowFrame2).CornerRadius = UDim.new(0,8)
-    local g2 = Instance.new("UIStroke", glowFrame2)
-    g2.Color = Color3.fromRGB(255,255,255); g2.Thickness = 4; g2.Transparency = 0.75; g2.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-
-    local glowFrame3 = Instance.new("Frame", Gui)
-    glowFrame3.BackgroundTransparency = 1
-    glowFrame3.Size = UDim2.new(0,718,0,538)
-    glowFrame3.Position = UDim2.new(0.5,-359,0.5,-269)
-    glowFrame3.ZIndex = 1
-    glowFrame3.BorderSizePixel = 0
-    Instance.new("UICorner",glowFrame3).CornerRadius = UDim.new(0,10)
-    local g3 = Instance.new("UIStroke", glowFrame3)
-    g3.Color = Color3.fromRGB(255,255,255); g3.Thickness = 6; g3.Transparency = 0.88; g3.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-
-    -- Keep glow frames in sync when UI is dragged (use AbsolutePosition for accuracy)
-    RunService.RenderStepped:Connect(function()
-        if not Main or not Main.Parent then return end
-        local ap = Main.AbsolutePosition
-        glowFrame2.Position = UDim2.new(0, ap.X - 4, 0, ap.Y - 4)
-        glowFrame3.Position = UDim2.new(0, ap.X - 9, 0, ap.Y - 9)
-    end)
-    Main:GetPropertyChangedSignal("Visible"):Connect(function()
-        glowFrame2.Visible = Main.Visible
-        glowFrame3.Visible = Main.Visible
-    end)
+    makestroke(Main, Color3.fromRGB(255, 255, 255), 1, 0.7) -- White outline
 
     local TweenService = game:GetService("TweenService")
 
@@ -743,4 +695,5 @@ function UILib:CreateWindow(cfg)
 end
 
 return UILib
+
 
