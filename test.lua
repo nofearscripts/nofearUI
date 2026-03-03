@@ -2,17 +2,6 @@
 --// ============================================================
 --// NO.FEAR UI LIBRARY v1.1 - Added mobile touch support
 --// ============================================================
--- Usage:
---   local UI = loadstring(game:HttpGet("...NoFear_UILib.lua"))()
---   local Window = UI:CreateWindow({ Title = "NoFear", Game = "Rivals", Version = "v1.0" })
---   local Tab = Window:AddTab({ Name = "Combat", Icon = "rbxassetid://..." })
---   local Section = Tab:AddSection("Aimbot")
---   Section:AddToggle({ Name = "Silent Aim", Default = false, Callback = function(v) end })
---   Section:AddSlider({ Name = "FOV", Min = 1, Max = 500, Default = 100, Callback = function(v) end })
---   Section:AddDropdown({ Name = "Mode", Options = {"A","B"}, Default = "A", Callback = function(v) end })
---   Section:AddLabel({ Text = "Warning!", Color = Color3.fromRGB(255,80,80) })
---   Section:AddButton({ Name = "Teleport", Callback = function() end })
--- ============================================================
 
 local UILib = {}
 UILib.__index = UILib
@@ -194,6 +183,7 @@ function UILib:CreateWindow(cfg)
     Main.ClipsDescendants = false
     Main.Parent = Gui
     makecorner(Main, 6)
+    makestroke(Main, Color3.fromRGB(255, 255, 255), 1, 0.7) -- White outline
 
     local TweenService = game:GetService("TweenService")
 
@@ -707,6 +697,5 @@ function UILib:CreateWindow(cfg)
 end
 
 return UILib
-
 
 
